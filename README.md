@@ -30,3 +30,7 @@ To recover, close Edge and restore the saved backup as `Local State` in the same
 ## Next work and validation
 
 Validate renaming, repeated runs and backup restoration on copies of representative Windows/macOS `Local State` fixtures, then test in disposable browser profiles. There is no committed automated test suite. Script inspection is not evidence of browser integration acceptance.
+
+## Current work and handoff
+
+Read [STATUS.md](STATUS.md) for current work, evidence, blockers and the next action. This README remains the project entry point; the handoff is a dated record and must be checked against live Git/issue state.
