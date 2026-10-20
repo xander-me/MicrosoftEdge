@@ -32,11 +32,12 @@ Remove `--demo` to load the current user's Edge profiles automatically. Use `--l
 - Drag back to **Other profiles**, or click **Unstar selected**, to return a profile to the A–Z remainder. Double-click also toggles starring.
 - Check the live **Current name → New name** preview. Selecting or dragging does not write files.
 - Close Edge completely, click **Apply changes**, and confirm. The GUI saves the same favourites file used by the scripts and prints the backup location in its completion dialog.
-- **Load / Reset** discards the preview and reloads saved data. Closing the window without applying also discards the preview.
+- **Load / Reset** reloads saved data. Reset, browsing to another file and closing the window ask before discarding an edited starred order.
+- A change count shows how many names will be updated; **Apply** disables when everything is saved or the file path needs loading. The last verified backup path remains visible and copyable after saving. Failed loads clear the previous profile list.
 
 Existing numeric prefixes and duplicate counts are detected when loading. The first preview uses saved favourites followed by A–Z; existing numbered names alone do not establish favourites. Application checks for running Edge processes on Windows and macOS and refuses to save until they are closed (demo mode uses temporary data). The GUI refuses stale browser/settings files and asks you to reload.
 
-Native desktop drag/drop, scaling and Edge integration on Windows/macOS still need acceptance testing. This repository does not yet provide a packaged executable or installer.
+Real Tk widgets, generated mouse drag/drop, saving, discard prompts, failed loads and minimum-window layout have been tested under Linux/Xvfb. Native interaction, scaling and Edge integration on Windows/macOS still need acceptance testing. This repository does not yet provide a packaged executable or installer.
 
 ## Use and recovery
 
@@ -72,7 +73,7 @@ The automatic backup covers the files this tool can overwrite: Local State and i
 
 ## Next work and validation
 
-Run `python3 -m unittest discover -s tests -v` for isolated synthetic-fixture checks of both CLIs (PowerShell checks require `pwsh`). GUI model checks also cover drag ordering, unstar, removed profiles, concurrent file changes and settings-write recovery. Coverage includes choosing favourites, invalid selections, cancellation, repeated runs, new profiles, clearing favourites, unrelated configuration preservation and byte-for-byte backup recovery.
+Run `python3 -m unittest discover -s tests -v` for isolated synthetic-fixture checks of both CLIs (PowerShell checks require `pwsh`). Desktop-widget tests run when Tk and a display are available; otherwise they skip explicitly. On a Linux test machine with Tk and Xvfb installed, run `xvfb-run -a python3 -m unittest discover -s tests -v` to include them. GUI model checks also cover drag ordering, unstar, removed profiles, concurrent file changes and settings-write recovery. Coverage includes choosing favourites, invalid selections, cancellation, repeated runs, new profiles, clearing favourites, unrelated configuration preservation and byte-for-byte backup recovery.
 
 For copied fixtures, pass `--local-state /path/to/Local State` to Python or `-LocalStatePath "C:\path\Local State"` to PowerShell. These also place settings/backups beside the supplied fixture.
 

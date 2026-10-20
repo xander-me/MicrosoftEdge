@@ -11,11 +11,15 @@ from uuid import uuid4
 
 
 def profiles_from(data):
-    cache = data.get('profile', {}).get('info_cache', {})
+    if not isinstance(data, dict) or not isinstance(data.get('profile'), dict):
+        raise ValueError('Invalid Local State: expected a profile object.')
+    cache = data['profile'].get('info_cache', {})
     if not isinstance(cache, dict) or not cache:
         raise ValueError('No Edge profiles found in Local State.')
     profiles = []
     for folder, info in cache.items():
+        if not isinstance(info, dict):
+            raise ValueError(f'Invalid profile data: {folder}')
         name = info.get('name', folder)
         if not isinstance(name, str):
             raise ValueError(f'Invalid profile name: {folder}')
@@ -101,11 +105,14 @@ class ProfileSession:
         self.settings = self.path.with_name('EdgeProfileOrg.settings.json')
         self.original_settings = self.settings.read_bytes() if self.settings.exists() else None
         saved = json.loads(self.original_settings.decode('utf-8-sig')) if self.original_settings is not None else {}
+        if not isinstance(saved, dict):
+            raise ValueError('Invalid starred profile settings: expected an object.')
         stars = saved.get('starred', [])
         if not isinstance(stars, list) or any(not isinstance(f, str) for f in stars) or len(set(stars)) != len(stars):
             raise ValueError('Invalid starred profile settings.')
         self.starred = [f for f in stars if f in {p['folder'] for p in self.profiles}]
         self.backup = None
+        self.initial_starred = list(self.starred)
 
     def pin(self, folder, position=None):
         if folder not in {p['folder'] for p in self.profiles}:
@@ -123,6 +130,19 @@ class ProfileSession:
     def preview(self):
         return [(p, f"{i:02d} - {p['clean']}") for i, p in
                 enumerate(ordered_profiles(self.profiles, self.starred), 1)]
+
+    @property
+    def rename_count(self):
+        return sum(profile['name'] != name for profile, name in self.preview())
+
+    @property
+    def has_unsaved_edits(self):
+        return self.starred != self.initial_starred
+
+    @property
+    def needs_save(self):
+        return bool(self.rename_count or self.original_settings is None or
+                    json.loads(self.original_settings.decode('utf-8-sig')) != {'starred': self.starred})
 
     def apply(self):
         if self.check_browser:
