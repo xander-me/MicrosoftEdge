@@ -15,7 +15,7 @@ Detect existing profile numbering, choose starred profiles in a fixed top-first 
 
 **Standalone apps:** the [Mac app builds](https://github.com/xander-me/MicrosoftEdge/actions/workflows/mac-app.yml) produce separate Apple Silicon and Intel downloads with Python and Tk included. Open a successful run and download its matching artifact. It contains a demo app and the profile organiser; no system Python, Tk or Homebrew is needed. These are development artifacts, not a signed/notarized stable release.
 
-See [Mac first-run instructions](docs/mac-first-run.md) for opening apps, dependency setup, backups and acceptance testing. The first [Apple Silicon and Intel build](https://github.com/xander-me/MicrosoftEdge/actions/runs/39389135624) passed all 18 tests and frozen-runtime checks; its development downloads are ready for Mac acceptance testing.
+See [Mac first-run instructions](docs/mac-first-run.md) for opening apps, dependency setup, backups and acceptance testing. The latest verified [Apple Silicon and Intel build](https://github.com/xander-me/MicrosoftEdge/actions/runs/39392264045) passed all 29 tests and frozen-runtime checks; its development downloads are ready for Mac acceptance testing.
 
 ## Desktop GUI
 
