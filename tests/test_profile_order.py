@@ -85,7 +85,7 @@ class OrderingTests(unittest.TestCase):
             self.assertEqual(path.read_bytes(), before)
 
     def test_python(self):
-        self.exercise([sys.executable, str(ROOT / 'ProfileOrg/EdgeProfileOrg_V1.0.py')], '--local-state')
+        self.exercise([sys.executable, str(ROOT / 'ProfileOrg/EdgeProfileOrg_V1.0.py'), '--quick'], '--local-state')
 
     @unittest.skipUnless(shutil.which('pwsh'), 'PowerShell unavailable')
     def test_powershell(self):

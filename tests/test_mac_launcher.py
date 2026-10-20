@@ -16,10 +16,10 @@ class MacLauncherTests(unittest.TestCase):
             uname.write_text('#!/bin/bash\necho Darwin\n')
             uname.chmod(0o755)
             runtime = folder / 'test python'
-            runtime.write_text('#!/bin/bash\nif [[ "$1" == -c ]]; then exit 0; fi\nprintf "%s\\n" "$@"\n')
+            runtime.write_text('#!/bin/bash\nif [[ "$1" == -c ]]; then [[ "$2" != *tkinter* ]]; exit $?; fi\nprintf "%s\\n" "$@"\n')
             runtime.chmod(0o755)
             env = dict(os.environ, PATH=str(folder) + ':' + os.environ['PATH'], EDGE_ORGANIZER_PYTHON=str(runtime))
             result = subprocess.run(['bash', str(ROOT / 'scripts/launch-mac.sh'), '--local-state', '/copied profiles/Local State'],
                                     env=env, text=True, capture_output=True)
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertEqual(result.stdout.splitlines(), [str(ROOT / 'ProfileOrg/EdgeProfileOrg_GUI.py'), '--local-state', '/copied profiles/Local State'])
+            self.assertEqual(result.stdout.splitlines(), [str(ROOT / 'ProfileOrg/EdgeProfileOrg_V1.0.py'), '--local-state', '/copied profiles/Local State'])
