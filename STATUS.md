@@ -25,4 +25,4 @@ Review CLI PR #3 and its dependent GUI PR. On Windows/macOS with Tk, launch the 
 
 ## Branch and local work
 
-GUI work is on `feat/profile-order-gui`, branched from clean, synchronized `feat/starred-profile-order` at `194a3f7`. It depends on PR #3 and will be submitted with that branch as its PR base, keeping the GUI diff separate. Tracks [issue #4](https://github.com/xander-me/MicrosoftEdge/issues/4). No earlier work was moved or overwritten. Final PR/publication details are recorded below.
+GUI work is on `feat/profile-order-gui`, branched from clean, synchronized `feat/starred-profile-order` at `194a3f7`. It depends on PR #3 and will be submitted with that branch as its PR base, keeping the GUI diff separate. Tracks [issue #4](https://github.com/xander-me/MicrosoftEdge/issues/4). No earlier work was moved or overwritten. Implementation and validation are committed and pushed in [PR #5](https://github.com/xander-me/MicrosoftEdge/pull/5), targeting `feat/starred-profile-order`. Both PRs remain open. After #3 merges, retarget #5 to main before merging it. No local/unpushed work remains after this handoff update.
