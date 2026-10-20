@@ -24,4 +24,4 @@ Review the task PR, then verify preview/apply/restart and backup recovery using 
 
 ## Branch and local work
 
-Work is on `feat/starred-profile-order`, based on synchronized main `6a3b590`. Checkout was clean at session start; no pre-existing work was moved. Changes will be committed and published through a PR; see the live repository PR list for review status. No real browser data was accessed or changed.
+Work is on `feat/starred-profile-order`, based on synchronized main `6a3b590`. Checkout was clean at session start; no pre-existing work was moved. Implementation and tests are committed and pushed in [PR #3](https://github.com/xander-me/MicrosoftEdge/pull/3), tracking [issue #2](https://github.com/xander-me/MicrosoftEdge/issues/2). PR remains open; browser acceptance is outstanding. No local/unpushed changes remain after this handoff update. No real browser data was accessed or changed.
