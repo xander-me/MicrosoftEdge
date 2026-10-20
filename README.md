@@ -40,6 +40,8 @@ Remove `--demo` to load the current user's Edge profiles automatically. Use `--l
 - Drag back to **Other profiles**, or click **Unstar selected**, to return a profile to the A–Z remainder. Double-click also toggles starring.
 - Check the live **Current name → New name** preview. Selecting or dragging does not write files.
 - Close Edge completely, click **Apply changes**, and confirm. The GUI saves the same favourites file used by the scripts and prints the backup location in its completion dialog.
+- **Refresh** reloads current disk data while keeping your proposed favourite order by folder ID. Apply also refreshes a stale preview without saving; review it and click Apply again. This handles Edge saving Local State during shutdown.
+- **Back up & remove…** makes a verified full local copy of the selected profile, Local State and organiser settings, then offers to open Edge’s own removal screen. You confirm deletion inside Edge, which handles managed restrictions. Removal is disabled for demo/copied files. See [backup/removal/recovery details](docs/mac-first-run.md#back-up-and-remove-a-local-profile).
 - **Load / Reset** reloads saved data. Reset, browsing to another file and closing the window ask before discarding an edited starred order.
 - A change count shows how many names will be updated; **Apply** disables when everything is saved or the file path needs loading. The last verified backup path remains visible and copyable after saving. Failed loads clear the previous profile list.
 
@@ -73,11 +75,11 @@ To recover, close Edge and restore the saved backup as `Local State` in the same
 
 ## Profile identity and preservation
 
-Dragging changes only the displayed numeric name prefix in `profile.info_cache.<existing folder>.name` in Local State. Profile directory names and IDs stay fixed. The tools do not move, recreate, merge or delete profiles; do not sign accounts out or change sync; and do not edit password databases, cookies, history, bookmarks, extensions, Preferences/Secure Preferences, policy stores or Local State encryption-key fields. The Python writer rebuilds from the loaded original and assigns only the previewed name fields.
+Dragging changes only the displayed numeric name prefix in `profile.info_cache.<existing folder>.name` in Local State. Profile directory names and IDs stay fixed. The ordering tools do not move, recreate, merge or delete profiles; do not sign accounts out or change sync; and do not edit password databases, cookies, history, bookmarks, extensions, Preferences/Secure Preferences, policy stores or Local State encryption-key fields. The Python writer rebuilds from the loaded original and assigns only the previewed name fields.
 
 Microsoft documents [profile directory identity](https://learn.microsoft.com/en-us/deployedge/edge-learnmore-create-user-directory-vars) and [enterprise sync/policy configuration](https://learn.microsoft.com/en-us/deployedge/microsoft-edge-enterprise-sync) separately. Keeping those paths and settings untouched is the preservation design; it is not a vendor guarantee that editing Local State is supported or that all Edge versions retain these names.
 
-The automatic backup covers the files this tool can overwrite: Local State and its own favourites settings. It is **not a full backup of passwords or all browser data**, and is not a migration between computers or OS accounts. It restores this tool's local changes, not cloud sync state or policy changes made elsewhere. No password export is performed. Real password decryption/autofill, account sign-in, sync health and policy continuity are acceptance gates in [the preservation checklist](docs/profile-preservation-validation.md), currently unverified in a real browser.
+For ordering, the automatic backup covers the files this tool can overwrite: Local State and its own favourites settings. That ordering backup is **not a full backup of passwords or all browser data**, and is not a migration between computers or OS accounts. It restores this tool's local changes, not cloud sync state or policy changes made elsewhere. No password export is performed. Real password decryption/autofill, account sign-in, sync health and policy continuity are acceptance gates in [the preservation checklist](docs/profile-preservation-validation.md), currently unverified in a real browser.
 
 ## Next work and validation
 
