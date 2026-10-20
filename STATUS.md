@@ -1,6 +1,6 @@
 # MicrosoftEdge — current work and handoff
 
-Updated: 2026-10-20. Owner: Maintainer. State: CLI ordering and desktop GUI implemented on review branches; native desktop/browser acceptance pending. [Scope and launch instructions](README.md).
+Updated: 2026-10-20. Owner: Maintainer. State: Terminal menu is the active interface; real-profile acceptance pending. Earlier GUI work is retained as a prototype. [Scope and launch instructions](README.md).
 
 ## Objective and authorization
 
@@ -41,9 +41,15 @@ Added **Back up & remove…**: background, flushed, hash-verified copy of the se
 
 Local test suite expanded to 29 checks, including stale preview/review, new/removed profiles, full backup preservation, failed/corrupt copies, demo protection and async GUI removal gating. Native [build 39392264045](https://github.com/xander-me/MicrosoftEdge/actions/runs/39392264045) at `1a79c55` succeeded for Apple Silicon and Intel: all 29 tests and both frozen-app smoke checks passed on each. Updated [Apple Silicon](https://github.com/xander-me/MicrosoftEdge/actions/runs/39392264045/artifacts/12249932779) and [Intel](https://github.com/xander-me/MicrosoftEdge/actions/runs/39392264045/artifacts/12250212384) artifacts are available. Tracks [issue #7](https://github.com/xander-me/MicrosoftEdge/issues/7), added to the shared board with the exact disposable-profile test action. Real-browser native removal and recovery NOT RUN. No real profile data was read or removed in development.
 
+## Terminal-first direction (supersedes GUI rollout)
+
+Maintainer reported both stale Local State and macOS Operation not permitted, then explicitly requested skipping the GUI and returning to a simpler terminal version while keeping functionality. Terminal version `0.4.0-terminal` is now the default: detected numbering, starred order, move/pin/unstar, A–Z remainder, retained favourites on refresh, preview/apply, verified ordering backups, full-profile backup and backed-up Edge-native removal. Python 3.10+ standard library only; no Tk or package installation. Finder launchers now start the terminal menu. Historical PowerShell and quick Python flow remain; use the Python menu for complete features. Automatic GUI builds disabled; prior app artifacts are historical, not current delivery.
+
+Terminal does not bypass OS access restrictions. Errors identify their operation/path and do not change permission settings. User-Mac privacy/ownership/flags cause remains unconfirmed. Real-profile password/sync/policy/removal/recovery acceptance is still NOT RUN. New terminal integration checks include site-packages-disabled execution, promotion/unstar, cancellation, demo/full backup, copied-file removal protection, stale preview and backup-gated native removal. Native terminal CI is being published without dependency installation.
+
 ## Next action
 
-Review CLI PR #3 and its dependent GUI PR. On the user Mac, download the updated standalone artifact from build 39392264045 (older builds lack Refresh/removal), reproduce shutdown/stale preview and verify Refresh retains the proposed order; test full backup/native removal/recovery on a disposable profile first, then open **Edge Profile Organiser Demo.app** for general interaction checks. Download the matching standalone app artifact and open **Edge Profile Organiser Demo.app** first; verify Finder/Gatekeeper opening, drag-to-star/unstar, favourite reordering, preview and apply/reload. Existing source checkouts can use **Try Demo.command**, which handles runtime selection/setup. Then test copied real-world fixtures and disposable Edge profiles, checking restart persistence, saved-password/autofill continuity, account and sync health, unchanged policies and backup recovery using the preservation checklist before wider use.
+Maintainer updates the existing feature-branch checkout and runs `python3 ProfileOrg/EdgeProfileOrg_V1.0.py --demo`; confirm version `0.4.0-terminal` and test M/S/U/A/B/R/Q. Then close Edge and run without `--demo`, verify OS file access and ordering backups, and test native removal/recovery on a disposable profile. Preserve the earlier password/sync/policy acceptance checklist. GUI packaging/permission diagnostics are no longer active implementation tasks.
 
 ## Branch and local work
 

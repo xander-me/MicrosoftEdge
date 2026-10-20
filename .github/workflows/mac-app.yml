@@ -1,15 +1,6 @@
 name: Mac app
 on:
   workflow_dispatch:
-  push:
-    branches: [main, feat/profile-order-gui]
-    paths:
-      - 'ProfileOrg/**'
-      - 'scripts/**'
-      - 'tests/**'
-      - 'requirements-build.txt'
-      - '.github/workflows/mac-app.yml'
-      - '*.command'
 permissions:
   contents: read
 jobs:

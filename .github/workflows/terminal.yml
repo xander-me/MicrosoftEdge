@@ -1,0 +1,31 @@
+name: Terminal checks
+on:
+  push:
+    branches: [main, feat/profile-order-gui]
+    paths:
+      - 'ProfileOrg/**'
+      - 'scripts/launch-mac.sh'
+      - 'tests/**'
+      - '*.command'
+      - '.github/workflows/terminal.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-15, macos-15-intel]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Run regression checks (no dependency installation)
+        run: python -m unittest discover -s tests -v
+      - name: Exercise terminal demo with site packages disabled
+        shell: bash
+        run: printf 'q\n' | python -S ProfileOrg/EdgeProfileOrg_V1.0.py --demo
