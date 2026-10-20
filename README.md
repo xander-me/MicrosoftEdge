@@ -9,6 +9,35 @@ Detect existing profile numbering, choose starred profiles in a fixed top-first 
 | Windows | [EdgeProfileOrg_V1.0.ps1](ProfileOrg/EdgeProfileOrg_V1.0.ps1) | PowerShell 5.1+, Edge profiles in the current user's Local AppData |
 | macOS | [EdgeProfileOrg_V1.0.py](ProfileOrg/EdgeProfileOrg_V1.0.py) | Python 3, Edge profiles in the current user's Library |
 
+## Desktop GUI
+
+The shared Windows/macOS GUI requires Python 3 with Tk support. On Windows, the python.org installer includes Tcl/Tk when that component is selected; on macOS, use a Python installation with Tk support. Check with `python3 -m tkinter` (Windows: `py -m tkinter`): it should open a small test window. Tk is a Python installation component, not a pip package.
+
+Try temporary sample profiles first:
+
+```sh
+# macOS
+python3 ProfileOrg/EdgeProfileOrg_GUI.py --demo
+```
+
+```powershell
+# Windows
+py .\ProfileOrg\EdgeProfileOrg_GUI.py --demo
+```
+
+Remove `--demo` to load the current user's Edge profiles automatically. Use `--local-state "/path/to/copied/Local State"` to work with a copied fixture instead. Demo changes are temporary and disappear when the app closes.
+
+- Click **Star selected**, or drag a profile from **Other profiles** into **Starred**.
+- Drag starred profiles into your preferred top-first order. **Move up/down** provides the same control without dragging.
+- Drag back to **Other profiles**, or click **Unstar selected**, to return a profile to the A–Z remainder. Double-click also toggles starring.
+- Check the live **Current name → New name** preview. Selecting or dragging does not write files.
+- Close Edge completely, click **Apply changes**, and confirm. The GUI saves the same favourites file used by the scripts and prints the backup location in its completion dialog.
+- **Load / Reset** discards the preview and reloads saved data. Closing the window without applying also discards the preview.
+
+Existing numeric prefixes and duplicate counts are detected when loading. The first preview uses saved favourites followed by A–Z; existing numbered names alone do not establish favourites. Windows refuses application while Edge is running; macOS requires you to close Edge yourself. The GUI refuses stale browser/settings files and asks you to reload.
+
+Native desktop drag/drop, scaling and Edge integration on Windows/macOS still need acceptance testing. This repository does not yet provide a packaged executable or installer.
+
 ## Use and recovery
 
 Run the script for the account whose profiles you want to rename. It displays existing numeric prefixes, flags duplicate numbers, and lists profiles in detected numeric order (unnumbered profiles follow alphabetically). This detects name prefixes, not Edge’s internal display order.
@@ -35,7 +64,7 @@ To recover, close Edge and restore the saved backup as `Local State` in the same
 
 ## Next work and validation
 
-Run `python3 -m unittest discover -s tests -v` for isolated synthetic-fixture checks of both CLIs (PowerShell checks require `pwsh`). Coverage includes choosing favourites, invalid selections, cancellation, repeated runs, new profiles, clearing favourites, unrelated configuration preservation and byte-for-byte backup recovery.
+Run `python3 -m unittest discover -s tests -v` for isolated synthetic-fixture checks of both CLIs (PowerShell checks require `pwsh`). GUI model checks also cover drag ordering, unstar, removed profiles, concurrent file changes and settings-write recovery. Coverage includes choosing favourites, invalid selections, cancellation, repeated runs, new profiles, clearing favourites, unrelated configuration preservation and byte-for-byte backup recovery.
 
 For copied fixtures, pass `--local-state /path/to/Local State` to Python or `-LocalStatePath "C:\path\Local State"` to PowerShell. These also place settings/backups beside the supplied fixture.
 

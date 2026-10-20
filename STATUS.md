@@ -1,27 +1,28 @@
 # MicrosoftEdge — current work and handoff
 
-Updated: 2026-10-20. Owner: Alexander. State: Profile ordering implemented on a task branch; browser acceptance pending. [Scope](README.md).
+Updated: 2026-10-20. Owner: Alexander. State: CLI ordering and desktop GUI implemented on review branches; native desktop/browser acceptance pending. [Scope and launch instructions](README.md).
 
 ## Objective and authorization
 
-Alexander requested detection of existing profile order and the option to promote new profiles, with starred profiles first and the remainder A–Z. Both platform scripts now support an interactive preview and confirmed application. Remembering favourites is the implementation default pending any preference correction.
+Alexander requested detection of existing numbering and ordered favourites before an A–Z remainder, then requested a GUI with drag/drop and stars. These features are implemented for review; no real Edge data was accessed or changed.
 
 ## Completed and evidence
 
-- Existing numeric prefixes are detected and displayed, including partial numbering and duplicate counts. Existing numbering does not imply favourite status.
-- Users select favourites in top-first order; stable folder IDs persist beside Local State. Enter retains favourites; `none` clears them. Remaining profiles sort alphabetically.
-- Cancel performs no writes. Changed Local State receives a unique backup. Unchanged names avoid a rewrite. Both scripts detect changes during preview; Windows requires Edge to be closed instead of force-stopping it. Python uses temporary-file replacement.
-- `python3 -m unittest discover -s tests -v`: passed both Python and PowerShell CLI fixture tests on Linux using Python 3 and pwsh. Tests cover invalid choices, cancellation, promotion, persistence, newly added profiles, clearing favourites, unrelated data and exact backup restoration.
-- Earlier documentation handoff PR #1 is merged; the old pending-rollout status is superseded.
+- CLI ordering is published in [PR #3](https://github.com/xander-me/MicrosoftEdge/pull/3), tracking [#2](https://github.com/xander-me/MicrosoftEdge/issues/2); still open at session start.
+- Shared Python/Tk desktop GUI: starred and alphabetical lists, drag between lists to star/unstar, drag favourites into order, buttons and double-click alternatives, live preview, browse/load/reset and explicit confirmed apply.
+- `--demo` uses disposable sample profiles. `--local-state` supports copied fixtures. Default paths cover Windows and macOS. GUI and CLI share the existing folder-ID favourite settings format.
+- Shared Python ordering/file-write helpers extracted without changing CLI behavior. GUI save model adds stale-settings detection, existing browser-data checks, unique backups and settings-write recovery messages. Windows checks for running Edge; macOS relies on the user closing it.
+- `python3 -m unittest discover -s tests -v`: all 8 tests passed on Linux (Python 3 and pwsh). Includes both CLI fixture tests and six GUI model tests for ordering, preview-only edits, persistence, stale files, removed profiles, invalid settings and partial-write recovery.
+- GUI/shared modules compiled successfully; CLI help verified. No real profiles used.
 
 ## Remaining acceptance and limitations
 
-Windows PowerShell 5.1, representative real-world Local State fixtures, and disposable-browser Windows/macOS integration: NOT RUN. Alexander owns access to those environments. Name numbering is detected; Edge’s internal visual order is not queried. Sorting uses platform collation. Local State and favourite settings are separate writes; see README recovery guidance.
+Tk and a display server are absent in this environment: actual window rendering, mouse drag/drop and keyboard interaction NOT RUN. Native Windows/macOS GUI, Windows PowerShell 5.1 and disposable-browser integration NOT RUN. Alexander owns access to those environments. Numeric names do not guarantee Edge's visual ordering. Platform collation can differ. Browser data and settings are separate writes; recovery guidance is in README. GUI requires Python with Tk; no packaged installer.
 
 ## Next action
 
-Review the task PR, then verify preview/apply/restart and backup recovery using disposable Edge profiles on Windows and macOS. Confirm that the browser retains the names and displays the intended order before wider use.
+Review CLI PR #3 and its dependent GUI PR. On Windows/macOS with Tk, launch the GUI using `--demo`, verify drag-to-star/unstar, favourite reordering, preview and apply/reload. Then test copied real-world fixtures and disposable Edge profiles, checking restart persistence and backup recovery before wider use.
 
 ## Branch and local work
 
-Work is on `feat/starred-profile-order`, based on synchronized main `6a3b590`. Checkout was clean at session start; no pre-existing work was moved. Implementation and tests are committed and pushed in [PR #3](https://github.com/xander-me/MicrosoftEdge/pull/3), tracking [issue #2](https://github.com/xander-me/MicrosoftEdge/issues/2). PR remains open; browser acceptance is outstanding. No local/unpushed changes remain after this handoff update. No real browser data was accessed or changed.
+GUI work is on `feat/profile-order-gui`, branched from clean, synchronized `feat/starred-profile-order` at `194a3f7`. It depends on PR #3 and will be submitted with that branch as its PR base, keeping the GUI diff separate. Tracks [issue #4](https://github.com/xander-me/MicrosoftEdge/issues/4). No earlier work was moved or overwritten. Final PR/publication details are recorded below.
