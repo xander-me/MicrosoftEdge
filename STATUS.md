@@ -12,7 +12,7 @@ Alexander requested detection of existing numbering and ordered favourites befor
 - Shared Python/Tk desktop GUI: starred and alphabetical lists, drag between lists to star/unstar, drag favourites into order, buttons and double-click alternatives, live preview, browse/load/reset and explicit confirmed apply.
 - `--demo` uses disposable sample profiles. `--local-state` supports copied fixtures. Default paths cover Windows and macOS. GUI and CLI share the existing folder-ID favourite settings format.
 - Shared Python ordering/file-write helpers extracted without changing CLI behavior. GUI save model adds stale-settings detection, existing browser-data checks, unique backups and settings-write recovery messages. Python checks for running Edge on Windows and macOS (temporary GUI demo exempt); PowerShell checks msedge.
-- `python3 -m unittest discover -s tests -v`: all 13 tests passed on Linux (Python 3 and pwsh). Includes both CLI fixture tests and eleven GUI model tests for ordering, preview-only edits, persistence, stale files, removed profiles, invalid settings and partial-write recovery.
+- `python3 -m unittest discover -s tests -v`: all 17 tests passed on Linux (Python 3, pwsh, Tk 8.6 and Xvfb). Includes both CLI fixture tests, four real-widget tests and eleven GUI model tests for ordering, preview-only edits, persistence, stale files, removed profiles, invalid settings and partial-write recovery.
 - GUI/shared modules compiled successfully; CLI help verified. No real profiles used.
 
 ## Preservation requirement added
@@ -23,7 +23,11 @@ Real password/autofill, sign-in, sync and policy continuity are REQUIRED but NOT
 
 ## Remaining acceptance and limitations
 
-Tk and a display server are absent in this environment: actual window rendering, mouse drag/drop and keyboard interaction NOT RUN. Native Windows/macOS GUI, Windows PowerShell 5.1 and disposable-browser integration NOT RUN. Alexander owns access to those environments. Numeric names do not guarantee Edge's visual ordering. Platform collation can differ. Browser data and settings are separate writes; recovery guidance is in README. GUI requires Python with Tk; no packaged installer.
+Earlier lack of Tk/display support was resolved for tests using packages unpacked under temporary storage, without a system installation. Real Tk window creation, generated mouse drag/drop, save/reset flows and the 780×560 minimum layout now pass under Linux/Xvfb. This is automated widget evidence, not manual native-platform acceptance. Full native keyboard/accessibility/scaling behaviour remains NOT RUN. Native Windows/macOS GUI, Windows PowerShell 5.1 and disposable-browser integration NOT RUN. Alexander owns access to those environments. Numeric names do not guarantee Edge's visual ordering. Platform collation can differ. Browser data and settings are separate writes; recovery guidance is in README. GUI requires Python with Tk; no packaged installer.
+
+## First-test polish
+
+Alexander asked for polish/optimisation before the first test. Added a pending-name count, no-op Apply disabling, copyable persistent backup path, discard prompts for edited starred order, stale-list clearing on load failure, clearer startup errors and input-shape validation. Extracted the window builder so actual widgets can be exercised. Real-widget tests caught clipped controls at minimum size; switched the outer layout to a grid with reserved rows and confirmed Apply and backup controls stay visible at 780×560. Temporary test packages/runtime are under `/tmp/edge-gui-test-deps` (not authoritative project files); tests live in the repository and can run with standard installed Tk/Xvfb. All 17 checks pass with the temporary runtime. No real browser data was used.
 
 ## Next action
 
