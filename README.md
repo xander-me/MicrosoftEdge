@@ -9,6 +9,14 @@ Detect existing profile numbering, choose starred profiles in a fixed top-first 
 | Windows | [EdgeProfileOrg_V1.0.ps1](ProfileOrg/EdgeProfileOrg_V1.0.ps1) | PowerShell 5.1+, Edge profiles in the current user's Local AppData |
 | macOS | [EdgeProfileOrg_V1.0.py](ProfileOrg/EdgeProfileOrg_V1.0.py) | Python 3, Edge profiles in the current user's Library |
 
+## Simplified Mac usage
+
+**From your existing checkout:** update `feat/profile-order-gui`, then double-click **Try Demo.command** in Finder. Double-click **Start Edge Profile Organiser.command** for your actual profiles. The launcher finds a working Python/Tk or offers setup; you do not need to select an interpreter. With Homebrew, it offers to install the matching runtime automatically. Without Homebrew, it opens the official Python installer download page and explains how to finish setup.
+
+**Standalone apps:** the [Mac app builds](https://github.com/xander-me/MicrosoftEdge/actions/workflows/mac-app.yml) produce separate Apple Silicon and Intel downloads with Python and Tk included. Open a successful run and download its matching artifact. It contains a demo app and the profile organiser; no system Python, Tk or Homebrew is needed. These are development artifacts, not a signed/notarized stable release.
+
+See [Mac first-run instructions](docs/mac-first-run.md) for opening apps, dependency setup, backups and acceptance testing. Packaging builds must succeed before their downloads are usable.
+
 ## Desktop GUI
 
 The shared Windows/macOS GUI requires Python 3 with Tk support. On Windows, the python.org installer includes Tcl/Tk when that component is selected; on macOS, use a Python installation with Tk support. Check with `python3 -m tkinter` (Windows: `py -m tkinter`): it should open a small test window. Tk is a Python installation component, not a pip package.
@@ -37,7 +45,7 @@ Remove `--demo` to load the current user's Edge profiles automatically. Use `--l
 
 Existing numeric prefixes and duplicate counts are detected when loading. The first preview uses saved favourites followed by A–Z; existing numbered names alone do not establish favourites. Application checks for running Edge processes on Windows and macOS and refuses to save until they are closed (demo mode uses temporary data). The GUI refuses stale browser/settings files and asks you to reload.
 
-Real Tk widgets, generated mouse drag/drop, saving, discard prompts, failed loads and minimum-window layout have been tested under Linux/Xvfb. Native interaction, scaling and Edge integration on Windows/macOS still need acceptance testing. This repository does not yet provide a packaged executable or installer.
+Real Tk widgets, generated mouse drag/drop, saving, discard prompts, failed loads and minimum-window layout have been tested under Linux/Xvfb. Native interaction, scaling and Edge integration on Windows/macOS still need acceptance testing. Standalone Mac app packaging is defined in `.github/workflows/mac-app.yml`; successful builds produce downloadable development artifacts. Windows still uses source launch commands.
 
 ## Use and recovery
 

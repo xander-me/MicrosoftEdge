@@ -1,0 +1,55 @@
+name: Mac app
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, feat/profile-order-gui]
+    paths:
+      - 'ProfileOrg/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'requirements-build.txt'
+      - '.github/workflows/mac-app.yml'
+      - '*.command'
+permissions:
+  contents: read
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: apple-silicon
+          - runner: macos-15-intel
+            arch: intel
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build runtime
+        run: |
+          brew install python-tk@3.14
+          echo "EDGE_ORGANIZER_PYTHON=$(brew --prefix python@3.14)/bin/python3.14" >> "$GITHUB_ENV"
+      - name: Run profile and real-widget tests
+        run: '"$EDGE_ORGANIZER_PYTHON" -m unittest discover -s tests -v'
+      - name: Build apps with Python and Tk included
+        run: scripts/build-mac.sh
+      - name: Smoke test bundled runtime and demo
+        run: |
+          "dist/Edge Profile Organiser.app/Contents/MacOS/Edge Profile Organiser" --smoke-test
+          "dist/Edge Profile Organiser Demo.app/Contents/MacOS/Edge Profile Organiser Demo" --smoke-test
+      - name: Zip app bundles
+        run: |
+          mkdir -p package
+          cp -R "dist/Edge Profile Organiser.app" "dist/Edge Profile Organiser Demo.app" package/
+          cp docs/mac-first-run.md package/'Read me first.md'
+          ditto -c -k --sequesterRsrc --keepParent package "Edge-Profile-Organiser-${{ matrix.arch }}.zip"
+          shasum -a 256 "Edge-Profile-Organiser-${{ matrix.arch }}.zip" > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Edge-Profile-Organiser-${{ matrix.arch }}
+          path: |
+            Edge-Profile-Organiser-${{ matrix.arch }}.zip
+            SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
