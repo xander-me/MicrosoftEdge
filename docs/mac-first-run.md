@@ -2,7 +2,7 @@
 
 ## Standalone app — no Python, Tk, Homebrew or Terminal required
 
-1. In this repository's Actions tab, open a successful **Mac app** run. Download the artifact matching **Apple Silicon** (M1/M2/M3/M4/etc.) or **Intel**, as shown in Apple menu → About This Mac.
+1. Open the [first successful Mac app build](https://github.com/xander-me/MicrosoftEdge/actions/runs/39389135624) (or a newer successful **Mac app** run in Actions). Download the artifact matching **Apple Silicon** (M1/M2/M3/M4/etc.) or **Intel**, as shown in Apple menu → About This Mac.
 2. Unzip the artifact, then unzip the `Edge-Profile-Organiser-*.zip` inside it. Keep the app bundles intact. The package includes **Edge Profile Organiser Demo.app** and **Edge Profile Organiser.app**.
 3. Double-click **Edge Profile Organiser Demo.app** first. This uses disposable sample profiles; try dragging, starring, applying and reloading. Demo data disappears when the app closes.
 4. These development builds are ad-hoc signed, not Developer ID signed/notarized. macOS may require approving the specific app in System Settings → Privacy & Security after the first launch attempt. Do not disable Gatekeeper system-wide. No signing credentials are configured.
