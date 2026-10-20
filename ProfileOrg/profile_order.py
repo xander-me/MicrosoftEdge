@@ -3,6 +3,8 @@ import json
 import os
 import re
 import shutil
+import subprocess
+import sys
 import tempfile
 from pathlib import Path
 from uuid import uuid4
@@ -47,6 +49,19 @@ def atomic_json(path, data):
             os.unlink(temporary)
 
 
+def verified_backup(path, expected, token):
+    """Create an exclusive, flushed, byte-verified copy before allowing writes."""
+    backup = path.with_name(path.name + '.backup-before-profile-prefix-' + token)
+    with backup.open('xb') as stream:
+        stream.write(expected)
+        stream.flush()
+        os.fsync(stream.fileno())
+    shutil.copymode(path, backup)
+    if backup.read_bytes() != expected:
+        raise OSError(f'Backup verification failed: {backup}. No changes applied.')
+    return backup
+
+
 def default_local_state():
     import sys
     if sys.platform == 'win32':
@@ -54,10 +69,31 @@ def default_local_state():
     return Path.home() / 'Library/Application Support/Microsoft Edge/Local State'
 
 
+def require_edge_closed():
+    if sys.platform == 'win32':
+        result = subprocess.run(['tasklist', '/FI', 'IMAGENAME eq msedge.exe', '/FO', 'CSV', '/NH'],
+                                capture_output=True, text=True,
+                                creationflags=subprocess.CREATE_NO_WINDOW)
+        if result.returncode != 0:
+            raise OSError('Could not verify that Edge is closed. No changes applied.')
+        running = 'msedge.exe' in result.stdout.lower()
+    elif sys.platform == 'darwin':
+        result = subprocess.run(['pgrep', '-f', r'Microsoft Edge\.app/Contents/'],
+                                capture_output=True, text=True)
+        if result.returncode not in (0, 1):
+            raise OSError('Could not verify that Edge is closed. No changes applied.')
+        running = result.returncode == 0
+    else:
+        return
+    if running:
+        raise ValueError('Close Edge completely, including background processes, before applying changes.')
+
+
 class ProfileSession:
     """An in-memory preview. Only apply() writes browser data or settings."""
 
-    def __init__(self, path):
+    def __init__(self, path, check_browser=True):
+        self.check_browser = check_browser
         self.path = Path(path)
         self.original = self.path.read_bytes()
         self.data = json.loads(self.original)
@@ -89,20 +125,35 @@ class ProfileSession:
                 enumerate(ordered_profiles(self.profiles, self.starred), 1)]
 
     def apply(self):
+        if self.check_browser:
+            require_edge_closed()
         if self.path.read_bytes() != self.original:
             raise ValueError('Local State changed. Close Edge and reload before applying.')
         current_settings = self.settings.read_bytes() if self.settings.exists() else None
         if current_settings != self.original_settings:
             raise ValueError('Saved favourites changed. Reload before applying.')
-        changed = any(p['name'] != name for p, name in self.preview())
+        proposed = self.preview()
+        changed = any(p['name'] != name for p, name in proposed)
+        desired_settings = {'starred': self.starred}
+        if not changed and self.original_settings is not None and json.loads(self.original_settings.decode('utf-8-sig')) == desired_settings:
+            return None
+        # Back up every file we overwrite, including settings-only changes.
+        token = uuid4().hex
+        self.backup = verified_backup(self.path, self.original, token)
+        if self.original_settings is not None:
+            verified_backup(self.settings, self.original_settings, token)
+        if self.path.read_bytes() != self.original or (self.settings.read_bytes() if self.settings.exists() else None) != self.original_settings:
+            raise ValueError('Files changed during backup. Reload before applying.')
+        if self.check_browser:
+            require_edge_closed()
+        # Rebuild from the original: only the existing profile name fields change.
+        updated = json.loads(self.original)
+        for profile, name in proposed:
+            updated['profile']['info_cache'][profile['folder']]['name'] = name
         if changed:
-            self.backup = self.path.with_name(self.path.name + '.backup-before-profile-prefix-' + uuid4().hex)
-            shutil.copy2(self.path, self.backup)
-            for profile, name in self.preview():
-                self.data['profile']['info_cache'][profile['folder']]['name'] = name
-            atomic_json(self.path, self.data)
+            atomic_json(self.path, updated)
         try:
-            atomic_json(self.settings, {'starred': self.starred})
+            atomic_json(self.settings, desired_settings)
         except OSError as error:
             raise OSError(f'Could not save favourites. Names may already have been applied. '
                           f'Backup: {self.backup}. Reload before retrying. {error}') from error
