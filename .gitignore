@@ -1,2 +1,4 @@
 __pycache__/
 *.py[cod]
+EdgeProfileOrg.settings.json
+*.backup-before-profile-prefix-*

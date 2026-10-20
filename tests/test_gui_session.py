@@ -76,6 +76,68 @@ class GuiSessionTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, 'Invalid starred'):
                     ProfileSession(self.path)
 
+    def test_running_browser_prevents_backup_and_writes(self):
+        session = ProfileSession(self.path)
+        session.pin('z')
+        with patch('profile_order.require_edge_closed', side_effect=ValueError('Close Edge completely')):
+            with self.assertRaisesRegex(ValueError, 'Close Edge completely'):
+                session.apply()
+        self.assertEqual(self.path.read_bytes(), self.original)
+        self.assertEqual(len(list(self.path.parent.iterdir())), 1)
+
+    def test_failed_backup_prevents_all_writes(self):
+        session = ProfileSession(self.path)
+        session.pin('z')
+        with patch('profile_order.verified_backup', side_effect=OSError('disk full')):
+            with self.assertRaisesRegex(OSError, 'disk full'):
+                session.apply()
+        self.assertEqual(self.path.read_bytes(), self.original)
+        self.assertFalse(session.settings.exists())
+
+    def test_failed_settings_backup_prevents_all_writes(self):
+        settings = self.path.with_name('EdgeProfileOrg.settings.json')
+        settings.write_bytes(b'{"starred": []}')
+        session = ProfileSession(self.path)
+        session.pin('z')
+        from profile_order import verified_backup
+        def backup(path, expected, token):
+            if path == settings:
+                raise OSError('settings backup denied')
+            return verified_backup(path, expected, token)
+        with patch('profile_order.verified_backup', side_effect=backup):
+            with self.assertRaisesRegex(OSError, 'settings backup denied'):
+                session.apply()
+        self.assertEqual(self.path.read_bytes(), self.original)
+        self.assertEqual(settings.read_bytes(), b'{"starred": []}')
+
+    def test_corrupt_backup_prevents_all_writes(self):
+        session = ProfileSession(self.path)
+        session.pin('z')
+        actual_read = Path.read_bytes
+        def read(path):
+            if '.backup-before-profile-prefix-' in path.name:
+                return b'corrupt backup'
+            return actual_read(path)
+        with patch.object(Path, 'read_bytes', read):
+            with self.assertRaisesRegex(OSError, 'Backup verification failed'):
+                session.apply()
+        self.assertEqual(self.path.read_bytes(), self.original)
+        self.assertFalse(session.settings.exists())
+
+    def test_settings_only_change_is_backed_up_before_write(self):
+        # Alpha is already first: pinning it only changes favourites.
+        session = ProfileSession(self.path)
+        session.apply()
+        before = self.path.read_bytes()
+        settings_before = session.settings.read_bytes()
+        session = ProfileSession(self.path)
+        session.pin('a')
+        backup = session.apply()
+        self.assertEqual(backup.read_bytes(), before)
+        settings_backup = session.settings.with_name(session.settings.name + '.backup-before-profile-prefix-' + backup.name.split('profile-prefix-')[1])
+        self.assertEqual(settings_backup.read_bytes(), settings_before)
+        self.assertEqual(self.path.read_bytes(), before)
+
     def test_settings_write_failure_reports_recovery(self):
         session = ProfileSession(self.path)
         session.pin('z')

@@ -3,8 +3,6 @@
 import argparse
 import json
 import tempfile
-import subprocess
-import sys
 from pathlib import Path
 from profile_order import ProfileSession, default_local_state
 
@@ -94,7 +92,7 @@ def main():
             self.preview.pack(fill='both', expand=True)
             footer = ttk.Frame(frame)
             footer.pack(fill='x', pady=(12, 0))
-            ttk.Label(footer, text='Close Edge completely before applying. A backup is created when names change.').pack(side='left')
+            ttk.Label(footer, text='Display names only; profile folders stay in place. Verified backup required before saving.').pack(side='left')
             self.apply_button = ttk.Button(footer, text='Apply changes…', command=self.apply, state='disabled')
             self.apply_button.pack(side='right')
             root.after(0, self.load)
@@ -107,7 +105,7 @@ def main():
 
         def load(self):
             try:
-                session = ProfileSession(self.path.get())
+                session = ProfileSession(self.path.get(), check_browser=Path(self.path.get()) != demo_path)
             except (OSError, ValueError, TypeError, AttributeError) as error:
                 messagebox.showerror('Cannot load profiles', str(error))
                 return
@@ -202,21 +200,16 @@ def main():
                 messagebox.showerror('Load profiles first', 'The file path changed. Click Load / Reset before applying.')
                 return
             is_demo = self.session.path == demo_path
-            prompt = 'Apply these changes to the temporary demo profiles?' if is_demo else 'Have you closed Edge completely?\n\nApply the previewed names and save starred profiles?'
+            prompt = 'Apply these changes to the temporary demo profiles?' if is_demo else 'Have you closed Edge completely?\n\nOnly display names change; profile folders stay in place. Verified backups must succeed before saving names and favourites.\n\nApply the preview?'
             if not messagebox.askyesno('Apply profile order?', prompt):
                 return
             try:
-                if sys.platform == 'win32' and not is_demo:
-                    processes = subprocess.run(['tasklist', '/FI', 'IMAGENAME eq msedge.exe', '/FO', 'CSV', '/NH'],
-                                               capture_output=True, text=True, check=True, creationflags=subprocess.CREATE_NO_WINDOW)
-                    if 'msedge.exe' in processes.stdout.lower():
-                        raise ValueError('Close Edge completely before applying changes.')
                 backup = self.session.apply()
-            except (OSError, ValueError, subprocess.SubprocessError) as error:
+            except (OSError, ValueError) as error:
                 messagebox.showerror('Changes could not be completed', str(error))
                 return
             messagebox.showinfo('Saved', 'Starred order saved.\n' +
-                                (f'Backup: {backup}' if backup else 'Names already matched; Local State unchanged.'))
+                                (f'Backup created and verified: {backup}' if backup else 'Names already matched; Local State unchanged.'))
             self.load()
 
     root = tk.Tk()
