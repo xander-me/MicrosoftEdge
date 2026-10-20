@@ -1,28 +1,27 @@
 # MicrosoftEdge — current work and handoff
 
-Updated: 2026-09-23. Owner: Alexander. State: Utility scripts. [Scope and project entry point](README.md).
+Updated: 2026-10-20. Owner: Alexander. State: Profile ordering implemented on a task branch; browser acceptance pending. [Scope](README.md).
 
 ## Objective and authorization
 
-Preserve the project's documented scope and provide a durable resume point. Alexander authorized the cross-project documentation handoff rollout on 2026-09-23: “Lets have it implemented.” This authorizes these documentation/agent-entry changes and publication through a PR; it does not start the next product task or authorize deployment. Reuse existing project decisions and authorization when a project task resumes.
+Alexander requested detection of existing profile order and the option to promote new profiles, with starred profiles first and the remainder A–Z. Both platform scripts now support an interactive preview and confirmed application. Remembering favourites is the implementation default pending any preference correction.
 
 ## Completed and evidence
 
-Windows PowerShell and macOS Python profile-renaming scripts create Local State backups. Recovery instructions are in README.
+- Existing numeric prefixes are detected and displayed, including partial numbering and duplicate counts. Existing numbering does not imply favourite status.
+- Users select favourites in top-first order; stable folder IDs persist beside Local State. Enter retains favourites; `none` clears them. Remaining profiles sort alphabetically.
+- Cancel performs no writes. Changed Local State receives a unique backup. Unchanged names avoid a rewrite. Both scripts detect changes during preview; Windows requires Edge to be closed instead of force-stopping it. Python uses temporary-file replacement.
+- `python3 -m unittest discover -s tests -v`: passed both Python and PowerShell CLI fixture tests on Linux using Python 3 and pwsh. Tests cover invalid choices, cancellation, promotion, persistence, newly added profiles, clearing favourites, unrelated data and exact backup restoration.
+- Earlier documentation handoff PR #1 is merged; the old pending-rollout status is superseded.
 
-## Remaining work and blockers
+## Remaining acceptance and limitations
 
-No committed automated suite; representative browser/OS rename, repeated-run and restore acceptance is NOT RUN. Alexander owns unresolved scope and access to representative environments. The current handoff records documentation inspection of base commit `a26c9f909cfc`; it does not re-run historical product tests.
+Windows PowerShell 5.1, representative real-world Local State fixtures, and disposable-browser Windows/macOS integration: NOT RUN. Alexander owns access to those environments. Name numbering is detected; Edge’s internal visual order is not queried. Sorting uses platform collation. Local State and favourite settings are separate writes; see README recovery guidance.
 
 ## Next action
 
-Prepare representative copied Local State fixtures to verify rename, repeated runs and backup restoration before any disposable-browser integration test.
+Review the task PR, then verify preview/apply/restart and backup recovery using disposable Edge profiles on Windows and macOS. Confirm that the browser retains the names and displays the intended order before wider use.
 
-## Issues and branches
+## Branch and local work
 
-Checked live on 2026-09-23:
-
-- No open project issues at inspection.
-- No pre-existing open PRs at inspection.
-
-The documentation rollout is on `docs/project-handoffs-14`, based on main `a26c9f909cfc`. Find its current review in [pull requests](https://github.com/xander-me/MicrosoftEdge/pulls). An open PR is not accepted delivery. Resolve the actual checkout with `git rev-parse --show-toplevel`; verify `git status --short`, branch/commit, fetched remote and live issue/PR state before resuming. The checkout was clean before this task; no pre-existing local work was moved or published. The rollout changes documentation only. Local/unpushed changes at later session boundaries must be recorded here explicitly.
+Work is on `feat/starred-profile-order`, based on synchronized main `6a3b590`. Checkout was clean at session start; no pre-existing work was moved. Changes will be committed and published through a PR; see the live repository PR list for review status. No real browser data was accessed or changed.
