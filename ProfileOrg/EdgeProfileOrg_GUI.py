@@ -239,6 +239,7 @@ def main():
     source = parser.add_mutually_exclusive_group()
     source.add_argument('--local-state', type=Path, help='Use a copied Local State file for testing')
     source.add_argument('--demo', action='store_true', help='Try temporary sample profiles without touching Edge')
+    parser.add_argument('--smoke-test', action='store_true', help=argparse.SUPPRESS)
     args = parser.parse_args()
     try:
         import tkinter as tk
@@ -262,6 +263,14 @@ def main():
         root = tk.Tk()
     except tk.TclError as error:
         parser.exit(1, f'Cannot open a desktop window: {error}\nRun from a desktop session with Python/Tk installed.\n')
+    if args.smoke_test:
+        # Verify the packaged Tcl/Tk runtime and widgets without reading browser data.
+        ttk.Label(root, text='Runtime check').pack()
+        root.update()
+        root.destroy()
+        if demo_directory:
+            demo_directory.cleanup()
+        return
     create_window(root, args.local_state or default_local_state(), demo_path)
     try:
         root.mainloop()
