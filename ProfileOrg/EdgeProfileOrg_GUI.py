@@ -3,8 +3,11 @@
 import argparse
 import json
 import tempfile
+import queue
+import threading
 from pathlib import Path
 from profile_order import ProfileSession, default_local_state
+from profile_removal import backup_for_removal, open_native_removal
 
 
 def create_window(root, initial_path, demo_path=None):
@@ -16,6 +19,7 @@ def create_window(root, initial_path, demo_path=None):
             self.root = root
             self.session = None
             self.drag = None
+            self.busy = False
             root.title('Edge Profile Organiser')
             root.geometry('1000x720')
             root.minsize(780, 560)
@@ -29,8 +33,10 @@ def create_window(root, initial_path, demo_path=None):
             pathbar = ttk.Frame(frame)
             pathbar.grid(row=2, column=0, sticky='ew')
             self.path = tk.StringVar(value=str(initial_path))
-            ttk.Entry(pathbar, textvariable=self.path).pack(side='left', fill='x', expand=True)
+            self.path_entry = ttk.Entry(pathbar, textvariable=self.path)
+            self.path_entry.pack(side='left', fill='x', expand=True)
             ttk.Button(pathbar, text='Browse…', command=self.browse).pack(side='left', padx=6)
+            ttk.Button(pathbar, text='Refresh', command=self.refresh).pack(side='left', padx=(0, 6))
             ttk.Button(pathbar, text='Load / Reset', command=self.load).pack(side='left')
             self.status = tk.StringVar(value='Load your profiles to start.')
             ttk.Label(frame, textvariable=self.status, wraplength=700).grid(row=3, column=0, sticky='w', pady=10)
@@ -50,6 +56,7 @@ def create_window(root, initial_path, demo_path=None):
                 box.configure(yscrollcommand=scroll.set)
                 scroll.pack(side='right', fill='y')
                 box.pack(fill='both', expand=True)
+                box.bind('<<ListboxSelect>>', self.selection_changed)
                 box.bind('<ButtonPress-1>', self.drag_start)
                 box.bind('<B1-Motion>', self.drag_motion)
                 box.bind('<ButtonRelease-1>', self.drag_end)
@@ -61,6 +68,8 @@ def create_window(root, initial_path, demo_path=None):
             ttk.Button(buttons, text='Unstar selected', command=lambda: self.toggle(self.boxes[0])).pack(side='left', padx=6)
             ttk.Button(buttons, text='Move up', command=lambda: self.move(-1)).pack(side='left')
             ttk.Button(buttons, text='Move down', command=lambda: self.move(1)).pack(side='left', padx=6)
+            self.remove_button = ttk.Button(buttons, text='Back up & remove…', command=self.remove_selected)
+            self.remove_button.pack(side='right')
             ttk.Label(frame, text='Preview — names after applying').grid(row=6, column=0, sticky='w', pady=(8, 4))
             holder = ttk.Frame(frame)
             holder.grid(row=7, column=0, sticky='nsew')
@@ -92,14 +101,20 @@ def create_window(root, initial_path, demo_path=None):
             return not (self.session and self.session.has_unsaved_edits) or messagebox.askyesno('Discard preview edits?', 'You have changed your starred order without saving. Discard these edits?')
 
         def close(self):
+            if self.busy:
+                messagebox.showinfo('Backup in progress', 'Please wait for backup verification to finish before closing.')
+                return
             if self.confirm_discard():
                 self.root.destroy()
 
         def update_apply_state(self):
-            ready = self.session and Path(self.path.get()) == self.session.path and self.session.needs_save
+            ready = not self.busy and self.session and Path(self.path.get()) == self.session.path and self.session.needs_save
             self.apply_button.configure(state='normal' if ready else 'disabled')
+            self.remove_button.configure(state='normal' if not self.busy and self.session else 'disabled')
 
         def browse(self):
+            if self.busy:
+                return
             if not self.confirm_discard():
                 return
             path = filedialog.askopenfilename(title='Choose Edge Local State (or a copied fixture)')
@@ -108,6 +123,8 @@ def create_window(root, initial_path, demo_path=None):
                 self.load(confirm=False)
 
         def load(self, confirm=True):
+            if self.busy:
+                return
             if confirm and not self.confirm_discard():
                 return
             try:
@@ -151,7 +168,15 @@ def create_window(root, initial_path, demo_path=None):
             self.summary.set(f'{self.session.rename_count} names will change · {len(self.session.starred)} starred profiles' if self.session.needs_save else 'Everything is saved. No changes to apply.')
             self.update_apply_state()
 
+        def selection_changed(self, event):
+            if event.widget.curselection():
+                for box in self.boxes:
+                    if box is not event.widget:
+                        box.selection_clear(0, 'end')
+
         def toggle(self, box):
+            if self.busy:
+                return
             if not self.session or not box.curselection():
                 return
             column = self.boxes.index(box)
@@ -163,6 +188,8 @@ def create_window(root, initial_path, demo_path=None):
             self.render(folder)
 
         def move(self, delta):
+            if self.busy:
+                return
             if not self.session or not self.boxes[0].curselection():
                 return
             index = self.boxes[0].curselection()[0]
@@ -171,6 +198,8 @@ def create_window(root, initial_path, demo_path=None):
             self.render(folder)
 
         def drag_start(self, event):
+            if self.busy:
+                return
             self.drag = None
             if not self.session or not event.widget.size():
                 return
@@ -189,6 +218,8 @@ def create_window(root, initial_path, demo_path=None):
                     target.yview_scroll(1, 'units')
 
         def drag_end(self, event):
+            if self.busy:
+                return
             drag, self.drag = self.drag, None
             if not drag or abs(event.x_root - drag[1]) + abs(event.y_root - drag[2]) < 5:
                 return
@@ -210,11 +241,99 @@ def create_window(root, initial_path, demo_path=None):
                 self.session.pin(folder, index)
             self.render(folder)
 
+        def refresh(self):
+            if self.busy or not self.session:
+                return False
+            if Path(self.path.get()) != self.session.path:
+                messagebox.showerror('Load profiles first', 'The path changed. Click Load / Reset to switch files.')
+                return False
+            try:
+                changed = self.session.refresh_if_changed()
+            except (OSError, ValueError) as error:
+                messagebox.showerror('Cannot refresh profiles', str(error))
+                return False
+            self.render()
+            self.status.set('Refreshed from disk. Your proposed favourites were kept where those profiles still exist. Review the preview before applying.')
+            return changed
+
+        def remove_selected(self):
+            if self.busy or not self.session:
+                return
+            if Path(self.path.get()) != self.session.path:
+                messagebox.showerror('Load profiles first', 'Load the selected file before removal.')
+                return
+            # Both listboxes can retain selection; require a single unambiguous choice.
+            selected = [self.rows[i][box.curselection()[0]] for i, box in enumerate(self.boxes) if box.curselection()]
+            if len(selected) != 1:
+                messagebox.showinfo('Select one profile', 'Select exactly one profile to back up and remove.')
+                return
+            folder = selected[0]
+            profile = next(p for p in self.session.profiles if p['folder'] == folder)
+            if self.session.path == demo_path:
+                messagebox.showinfo('Demo only', 'Profile removal is disabled in the demo. Your real Edge profiles are never accessed.')
+                return
+            if self.session.path.resolve() != default_local_state().resolve():
+                messagebox.showinfo('Copied profile data', 'Native removal is available only for the standard Edge data file. Copied fixtures cannot open removal for your real profiles.')
+                return
+            try:
+                if self.session.refresh_if_changed():
+                    self.render()
+                    messagebox.showinfo('Profiles refreshed', 'Local State or favourites changed since loading. Your proposed order is retained. Review the list and select the profile again before removal.')
+                    return
+            except (OSError, ValueError) as error:
+                messagebox.showerror('Cannot prepare removal', str(error))
+                return
+            if not messagebox.askyesno('Back up and open Edge removal?',
+                    f"Profile: {profile['name']}\nFolder: {folder}\n\nClose Edge completely. A full verified local profile backup will be made first; this can take time and disk space. Edge will then open its own removal screen, where you confirm deletion. No deletion happens automatically. Continue?"):
+                return
+            self.busy = True
+            self.path_entry.configure(state='readonly')
+            self.update_apply_state()
+            self.status.set(f'Backing up and verifying {profile["name"]}… Please keep Edge closed. No profile has been deleted.')
+            results = queue.Queue()
+            session = self.session
+            def work():
+                try:
+                    results.put((backup_for_removal(session, folder), None))
+                except Exception as error:
+                    results.put((None, error))
+            def finish():
+                try:
+                    backup, error = results.get_nowait()
+                except queue.Empty:
+                    self.root.after(100, finish)
+                    return
+                self.busy = False
+                self.path_entry.configure(state='normal')
+                self.update_apply_state()
+                if error:
+                    self.status.set('Backup did not complete. No removal screen was opened.')
+                    messagebox.showerror('Removal stopped', str(error))
+                    return
+                self.backup_path.set(str(backup))
+                self.status.set('Full profile backup verified. Removal requires confirmation inside Edge; refresh this list after closing Edge again.')
+                if messagebox.askyesno('Backup verified', f'Full local backup: {backup}\n\nOpen the selected profile in Edge now? Choose its Remove option and confirm there. Managed policies may prevent removal.'):
+                    try:
+                        open_native_removal(folder)
+                    except Exception as error:
+                        messagebox.showerror('Could not open Edge', f'Your backup is complete: {backup}\n{error}')
+            threading.Thread(target=work, daemon=True).start()
+            self.root.after(100, finish)
+
         def apply(self):
-            if not self.session:
+            if self.busy or not self.session:
                 return
             if Path(self.path.get()) != self.session.path:
                 messagebox.showerror('Load profiles first', 'The file path changed. Click Load / Reset before applying.')
+                return
+            try:
+                if self.session.refresh_if_changed():
+                    self.render()
+                    self.status.set('Updated from disk; proposed favourites retained. Review the fresh preview, then Apply again.')
+                    messagebox.showinfo('Profiles refreshed', 'Edge or another process saved Local State after it was loaded. The latest data is now loaded and your proposed favourites are retained. Review the preview and click Apply again. No files were written.')
+                    return
+            except (OSError, ValueError) as error:
+                messagebox.showerror('Cannot prepare changes', str(error))
                 return
             is_demo = self.session.path == demo_path
             prompt = 'Apply these changes to the temporary demo profiles?' if is_demo else 'Have you closed Edge completely?\n\nOnly display names change; profile folders stay in place. Verified backups must succeed before saving names and favourites.\n\nApply the preview?'

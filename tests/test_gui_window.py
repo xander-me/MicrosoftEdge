@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import sys
 import tempfile
+import time
 import unittest
 from unittest.mock import patch
 
@@ -66,6 +67,67 @@ class WindowTests(unittest.TestCase):
         self.assertEqual(str(self.app.apply_button['state']), 'disabled')
         self.assertIn('Everything is saved', self.app.summary.get())
         self.assertFalse(self.errors)
+
+    def test_stale_apply_refreshes_and_keeps_preview_without_writing(self):
+        self.app.session.pin('z')
+        self.app.render()
+        data = json.loads(self.path.read_bytes())
+        data['background_change'] = 'preserve latest'
+        self.path.write_text(json.dumps(data))
+        before = self.path.read_bytes()
+        with patch('tkinter.messagebox.showinfo') as notice, patch('tkinter.messagebox.askyesno') as confirm:
+            self.app.apply()
+        self.assertEqual(self.path.read_bytes(), before)
+        self.assertEqual(self.app.session.starred, ['z'])
+        confirm.assert_not_called()
+        notice.assert_called_once()
+        with patch('tkinter.messagebox.showinfo'), patch('tkinter.messagebox.askyesno', return_value=True):
+            self.app.apply()
+        self.assertEqual(json.loads(self.path.read_bytes())['background_change'], 'preserve latest')
+        self.assertEqual(json.loads(self.path.read_bytes())['profile']['info_cache']['z']['name'], '01 - Zebra')
+
+    def test_demo_removal_never_opens_real_edge(self):
+        self.app.boxes[1].selection_set(0)
+        with patch('tkinter.messagebox.showinfo') as notice, patch('EdgeProfileOrg_GUI.open_native_removal') as native:
+            self.app.remove_selected()
+        native.assert_not_called()
+        notice.assert_called_once()
+
+    def test_native_removal_waits_for_verified_backup(self):
+        root = tk.Tk()
+        self.addCleanup(root.destroy)
+        app = create_window(root, self.path)
+        root.update()
+        app.session.check_browser = False
+        app.boxes[1].selection_set(0)
+        backup = self.path.parent / 'verified-backup'
+        with patch('EdgeProfileOrg_GUI.default_local_state', return_value=self.path), patch('EdgeProfileOrg_GUI.backup_for_removal', return_value=backup) as copied, patch('EdgeProfileOrg_GUI.open_native_removal') as native, patch('tkinter.messagebox.askyesno', return_value=True):
+            app.remove_selected()
+            deadline = time.monotonic() + 5
+            while app.busy and time.monotonic() < deadline:
+                root.update()
+                time.sleep(0.01)
+            self.assertFalse(app.busy)
+            copied.assert_called_once_with(app.session, 'a')
+            native.assert_called_once_with('a')
+            self.assertEqual(app.backup_path.get(), str(backup))
+
+    def test_failed_removal_backup_never_opens_edge(self):
+        root = tk.Tk()
+        self.addCleanup(root.destroy)
+        app = create_window(root, self.path)
+        root.update()
+        app.session.check_browser = False
+        app.boxes[1].selection_set(0)
+        with patch('EdgeProfileOrg_GUI.default_local_state', return_value=self.path), patch('EdgeProfileOrg_GUI.backup_for_removal', side_effect=OSError('disk full')), patch('EdgeProfileOrg_GUI.open_native_removal') as native, patch('tkinter.messagebox.askyesno', return_value=True), patch('tkinter.messagebox.showerror') as error:
+            app.remove_selected()
+            deadline = time.monotonic() + 5
+            while app.busy and time.monotonic() < deadline:
+                root.update()
+                time.sleep(0.01)
+            self.assertFalse(app.busy)
+            native.assert_not_called()
+            error.assert_called_once()
 
     def test_controls_fit_minimum_window(self):
         self.root.geometry('780x560')

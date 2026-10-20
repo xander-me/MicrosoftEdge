@@ -144,6 +144,19 @@ class ProfileSession:
         return bool(self.rename_count or self.original_settings is None or
                     json.loads(self.original_settings.decode('utf-8-sig')) != {'starred': self.starred})
 
+    def refresh_if_changed(self):
+        """Reload fresh data without writing; preserve explicit favourite edits by ID."""
+        if self.check_browser:
+            require_edge_closed()
+        latest = ProfileSession(self.path, check_browser=self.check_browser)
+        if latest.original == self.original and latest.original_settings == self.original_settings:
+            return False
+        if self.has_unsaved_edits:
+            existing = {p['folder'] for p in latest.profiles}
+            latest.starred = [folder for folder in self.starred if folder in existing]
+        self.__dict__.update(latest.__dict__)
+        return True
+
     def apply(self):
         if self.check_browser:
             require_edge_closed()

@@ -22,3 +22,15 @@ If the launcher is blocked by macOS, approve only this downloaded file in Privac
 ## Building from source (maintainers)
 
 On macOS with a Tk-enabled Python, run `scripts/build-mac.sh`. Set `EDGE_ORGANIZER_PYTHON` to a specific interpreter if needed. The script creates an isolated build environment, installs the pinned build requirements, and writes both apps to `dist/`. GitHub Actions builds Apple Silicon and Intel separately, runs regression/widget tests and smoke-checks both frozen Tcl/Tk runtimes before uploading artifacts. Artifacts are development builds retained for 30 days, not a published stable release. A successful build/run link and commit should be recorded in STATUS.md.
+
+## Local State changed, even with Edge closed
+
+Closing Edge can save a new Local State after the organiser first loads it. The organiser detects this as a stale preview; it does not mean Edge is necessarily still running. Use **Refresh** to reload while keeping your proposed favourite order by folder ID. Apply also detects changes and refreshes the preview without writing; review it and click Apply again. Added/removed profiles are reflected in the fresh preview. **Load / Reset** still discards edits with confirmation. If repeated refreshes keep detecting new changes, keep Edge closed and investigate the writer rather than bypassing the guard.
+
+## Back up and remove a local profile
+
+Select a profile and click **Back up & remove…**. Close Edge first. The organiser copies the selected profile's complete local directory, Local State and any favourites settings to **Edge Profile Organiser Backups** beside the Edge user-data directory, then verifies file hashes and flushes copied data. It does not alter the source profile. Backup runs in the background; keep the app open until it completes. A `READY.json` marker is created only after successful verification. Incomplete backups must not be used as validated recovery copies.
+
+After verification, choose whether to open Edge. The selected profile's native settings screen opens; use Edge's Remove control and confirm there. Edge handles account cleanup and managed restrictions. The organiser sends no cloud-data deletion request. Demo/copy-file modes never open removal against real profiles, and only the standard Edge data location supports this flow. This feature backs up data; it does not bypass Edge policies or directly delete folders/profile registration.
+
+Keep the private backup locally; it contains sensitive browser data. To recover on the same Mac/OS account: close Edge, independently back up its current data, then restore the selected profile folder and the snapshot's Local State and organiser settings to their original locations (remove organiser settings only if `settings_existed` in READY.json is false). Restoring the full Local State also restores its entire profile registry at the snapshot time, so do not overwrite a later state after creating/removing other profiles without reconciling those changes. The backup does not include macOS Keychain or remote sync state. Native removal/recovery and password/sync/policy continuity remain required real-browser acceptance tests.
