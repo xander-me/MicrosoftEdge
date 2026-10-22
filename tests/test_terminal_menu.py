@@ -36,7 +36,7 @@ class TerminalMenuTests(unittest.TestCase):
 
     def test_move_to_top_apply_and_unstar(self):
         result = self.run_cli('m\n3\n1\na\ny\nq\n', '--local-state', str(self.path))
-        self.assertIn('0.5.0-terminal', result.stdout)
+        self.assertIn('0.5.1-terminal', result.stdout)
         data = json.loads(self.path.read_bytes())
         self.assertEqual(data['profile']['info_cache']['c']['name'], '01 - New profile')
         self.assertEqual(data['os_crypt'], self.data['os_crypt'])

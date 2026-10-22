@@ -53,9 +53,13 @@ Alexander found B's selected-profile prompt confusing and explicitly requested a
 
 Expanded tests cover complete/shared/unregistered data, repeated snapshots, cancelled B, no selection prompt, disk space, copy corruption/failure, concurrent writes, runtime links and running Edge. Local suite: 44 discovered, 36 passed, eight optional GUI tests skipped without Tk/display. Native [terminal CI](https://github.com/xander-me/MicrosoftEdge/actions/runs/39740421508) at `c664533` succeeded: Apple Silicon and Intel each passed all 44 tests; Linux passed 36 with eight optional GUI checks skipped. Each runner also completed the dependency-free terminal demo. Tracks [issue #9](https://github.com/xander-me/MicrosoftEdge/issues/9), on the shared board with the B/all-profile test handoff. Real user-data restore remains NOT RUN. No real browser data was read or changed.
 
+## Readable terminal overview
+
+Alexander requested a clearer overview after sharing a 35-profile list plus a duplicated preview. Version `0.5.1-terminal` replaces both with one terminal-width-aware table: stable selection #, starred marker, clean name, current numeric prefix and proposed prefix. Changes/unchanged rows are marked; counts are concise; folder IDs/source path are hidden by default and available via V/--details. The menu is grouped into Order, Save and View. Selection IDs, sorting and saved data behaviour are unchanged. Layout checked using the synthetic demo before/after pinning; existing regression suite passes locally (44 discovered, 36 pass, eight optional GUI tests skipped). Native CI result pending. No real browser data used.
+
 ## Next action
 
-Alexander updates the existing feature-branch checkout and runs `python3 ProfileOrg/EdgeProfileOrg_V1.0.py --demo`; confirm version `0.5.0-terminal` and test M/S/U/A/B/R/Q. Then close Edge and run without `--demo`, verify OS file access and ordering backups, and test native removal/recovery on a disposable profile. Preserve the earlier password/sync/policy acceptance checklist. GUI packaging/permission diagnostics are no longer active implementation tasks.
+Alexander updates the existing feature-branch checkout and runs `python3 ProfileOrg/EdgeProfileOrg_V1.0.py --demo`; confirm version `0.5.1-terminal` and test M/S/U/A/B/R/Q. Then close Edge and run without `--demo`, verify OS file access and ordering backups, and test native removal/recovery on a disposable profile. Preserve the earlier password/sync/policy acceptance checklist. GUI packaging/permission diagnostics are no longer active implementation tasks.
 
 ## Branch and local work
 
