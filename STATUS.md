@@ -84,3 +84,7 @@ Next action: switch to main and pull on the Mac, launch --demo in Terminal.app, 
 ## Main promotion completed
 
 Version `0.6.0-terminal` is on main at merge `8d5be5d`. [Main CI 39750042646](https://github.com/xander-me/MicrosoftEdge/actions/runs/39750042646) succeeded after the merge. Local checkout is main, synchronized with origin; --version confirms 0.6.0-terminal. No uncommitted/unpushed work remains after this documentation update. User-Mac acceptance remains pending as described above; merging does not certify password/sync/policy or restore behaviour. Maintainer can now use git switch main and git pull --ff-only before the demo.
+
+## Public-repository privacy cleanup
+
+The maintainer authorized removing personal details while preserving Using-IT as the script author. Current documentation and public issue/comment text use neutral wording; unnecessary user-device measurements are removed. Script author headers say Using-IT, and future repository commits use company attribution with the GitHub noreply address. A private backup is retained outside this repository. Public branch-history sanitization is in progress; old GitHub pull-request refs/caches and third-party clones may retain previous content. No functionality changes are intended. Local regression results and publication verification are recorded below after completion. Real-browser acceptance remains pending.

@@ -1,4 +1,5 @@
 #!/bin/bash
+# Author: Using-IT
 # Terminal launcher: Python standard library only; no Tk, pip or Homebrew setup.
 set -euo pipefail
 project_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"

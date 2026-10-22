@@ -2,6 +2,7 @@
 .SYNOPSIS
 Preview Edge profile numbering and choose remembered favourites before the A-Z remainder.
 .NOTES
+Author: Using-IT
 Requires PowerShell 5.1+. Run as the intended user with Edge closed.
 #>
 param([string]$LocalStatePath = (Join-Path $env:LOCALAPPDATA 'Microsoft\Edge\User Data\Local State'))

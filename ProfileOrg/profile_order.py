@@ -1,3 +1,4 @@
+# Author: Using-IT
 """Shared profile ordering and safe file writes for the CLI and GUI."""
 import json
 import os
