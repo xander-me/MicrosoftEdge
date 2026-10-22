@@ -4,15 +4,16 @@ import argparse
 import errno
 import json
 import shutil
+import shlex
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
 from profile_order import ProfileSession, default_local_state
 from profile_removal import backup_for_removal, open_native_removal
-from profile_backup import backup_all_profiles
+from profile_backup import backup_all_profiles, backup_destination
 
-VERSION = '0.5.1-terminal'
+VERSION = '0.5.2-terminal'
 
 
 class TerminalOrganizer:
@@ -21,6 +22,7 @@ class TerminalOrganizer:
         self.details = details
         self.session = ProfileSession(path, check_browser=not demo)
         self.last_backup = None
+        self.backup_folder = None
 
     def show(self):
         session = self.session
@@ -107,10 +109,22 @@ class TerminalOrganizer:
         print(f'Back up ALL {len(self.session.profiles)} profiles and all shared Edge data.')
         print(f'Source folder: {self.session.path.parent}')
         print('Keep Edge completely closed. Existing backups are never overwritten.')
+        default_folder = backup_destination(self.session.path.parent, self.backup_folder)
+        value = input(f'Backup folder [Enter = {default_folder}]: ').strip()
+        if value:
+            if sys.platform != 'win32' and (value.startswith(('"', "'")) or '\\' in value):
+                parts = shlex.split(value)
+                if len(parts) != 1:
+                    raise ValueError('Enter one destination folder path.')
+                value = parts[0]
+            elif len(value) > 1 and value[0] == value[-1] and value[0] in ('"', "'"):
+                value = value[1:-1]
+        self.backup_folder = backup_destination(self.session.path.parent, value or default_folder)
+        print(f'Backup location: {self.backup_folder} (a new snapshot folder will be created inside)')
         if input('Create and verify a full Edge backup? [y/N] ').strip().lower() != 'y':
             print('Cancelled; no backup or source changes made.')
             return
-        self.last_backup = backup_all_profiles(self.session, progress=lambda message: print(message, flush=True))
+        self.last_backup = backup_all_profiles(self.session, progress=lambda message: print(message, flush=True), destination=self.backup_folder)
         print(f'Full backup verified (ALL profiles): {self.last_backup}')
 
     def backup(self, remove=False):

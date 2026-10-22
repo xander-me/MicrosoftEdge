@@ -11,26 +11,46 @@ from profile_removal import durable_copy, fingerprint
 RUNTIME_LINKS = frozenset({'SingletonLock', 'SingletonCookie', 'SingletonSocket', 'RunningChromeVersion'})
 
 
-def backup_all_profiles(session, progress=None):
+def backup_destination(root, destination=None):
+    root = Path(root).resolve()
+    target = Path(destination).expanduser() if destination is not None else root.parent / 'Edge Profile Organiser Backups'
+    if target.is_symlink() or target.resolve() == root or root in target.resolve().parents:
+        raise ValueError('Choose a backup folder outside Edge data that is not a symbolic link.')
+    if target.exists() and not target.is_dir():
+        raise ValueError('Choose a destination folder, not an existing file.')
+    return target.resolve()
+
+
+def size_label(size):
+    return f'{size / (1024 ** 3):.1f} GiB' if size >= 1024 ** 3 else f'{size / (1024 ** 2):.1f} MiB'
+
+
+def backup_all_profiles(session, progress=None, destination=None):
     notify = progress or (lambda message: None)
     if session.check_browser:
         require_edge_closed()
     root = session.path.parent.resolve()
+    backup_root = backup_destination(root, destination)
     if session.path.read_bytes() != session.original or (session.settings.read_bytes() if session.settings.exists() else None) != session.original_settings:
         raise ValueError('Edge data changed. Refresh before starting the full backup.')
     notify('Scanning and hashing all Edge profile and shared files…')
     before = fingerprint(root, allowed_links=RUNTIME_LINKS)
     total_bytes = sum(item.get('bytes', 0) for item in before.values())
-    backup_root = root.parent / 'Edge Profile Organiser Backups'
-    if backup_root.is_symlink() or backup_root.resolve() == root or root in backup_root.resolve().parents:
-        raise ValueError('The backup destination must be outside the source and must not be linked.')
-    backup_root.mkdir(mode=0o700, exist_ok=True)
+    backup_root.mkdir(mode=0o700, parents=True, exist_ok=True)
     if shutil.disk_usage(backup_root).free < total_bytes + 1024 * 1024:
         raise OSError('Not enough free disk space for a complete Edge backup. No source files changed.')
     backup = Path(tempfile.mkdtemp(prefix='all-profiles-', dir=backup_root))
     snapshot = backup / 'User Data'
     file_count = sum('sha256' in item for item in before.values())
-    notify(f'Copying {len(session.profiles)} profiles and shared data ({file_count} files, {total_bytes / (1024 * 1024):.1f} MiB)…')
+    groups = {}
+    for name, info in before.items():
+        group = name.split('/')[0]
+        groups[group] = groups.get(group, 0) + info.get('bytes', 0)
+    notify('Largest source folders/files (full uncompressed copy; caches are included):')
+    for name, size in sorted(groups.items(), key=lambda item: item[1], reverse=True)[:6]:
+        notify(f'  {size_label(size):>10}  {name}')
+    notify(f'Backup destination: {backup}')
+    notify(f'Copying {len(session.profiles)} profiles and shared data ({file_count} files, {size_label(total_bytes)})…')
     try:
         shutil.copytree(root, snapshot, symlinks=True, copy_function=durable_copy)
         notify('Verifying every copied file and checking that the source stayed unchanged…')

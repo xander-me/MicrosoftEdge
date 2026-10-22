@@ -40,6 +40,23 @@ class FullBackupTests(unittest.TestCase):
         self.assertNotEqual(backup, second)
         self.assertEqual((backup / 'READY.json').read_bytes(), first_manifest_bytes)
 
+    def test_custom_destination_contains_complete_snapshot(self):
+        target = Path(self.temp.name) / 'Other disk' / 'Snapshots'
+        backup = backup_all_profiles(self.session, destination=target)
+        self.assertEqual(backup.parent, target)
+        self.assertTrue((backup / 'READY.json').exists())
+        self.assertEqual((backup / 'User Data/Local State').read_bytes(), self.path.read_bytes())
+        self.assertFalse((Path(self.temp.name) / 'Edge Profile Organiser Backups').exists())
+
+    def test_destination_inside_source_is_refused_before_copy(self):
+        with patch('profile_backup.shutil.copytree') as copied:
+            for target in (self.root, self.root / 'nested-backup'):
+                with self.subTest(target=target):
+                    with self.assertRaisesRegex(ValueError, 'outside Edge data'):
+                        backup_all_profiles(self.session, destination=target)
+        copied.assert_not_called()
+        self.assertFalse((self.root / 'nested-backup').exists())
+
     def test_copy_failure_never_marks_ready(self):
         with patch('profile_backup.shutil.copytree', side_effect=OSError('disk full')):
             with self.assertRaisesRegex(OSError, 'incomplete copy'):
