@@ -47,9 +47,15 @@ Alexander reported both stale Local State and macOS Operation not permitted, the
 
 Terminal does not bypass OS access restrictions. Errors identify their operation/path and do not change permission settings. User-Mac privacy/ownership/flags cause remains unconfirmed. Real-profile password/sync/policy/removal/recovery acceptance is still NOT RUN. New terminal integration checks include site-packages-disabled execution, promotion/unstar, cancellation, demo/full backup, copied-file removal protection, stale preview and backup-gated native removal. Native [terminal CI](https://github.com/xander-me/MicrosoftEdge/actions/runs/39396920850) at `43cf876` succeeded without dependency installation: macOS Apple Silicon and Intel each passed all 36 tests; Linux passed 28 with eight optional GUI checks skipped. Each runner also completed the terminal demo with site packages disabled. Tracks [issue #8](https://github.com/xander-me/MicrosoftEdge/issues/8), added to the shared board with the terminal test handoff.
 
+## All-profile backup request
+
+Alexander found B's selected-profile prompt confusing and explicitly requested a full backup feature. Version `0.5.0-terminal` changes **B** to back up ALL profiles and the entire shared Edge user-data directory with one confirmation and no profile selection. It includes unregistered folders, Local State and settings; checks free disk space; flushes copies; hash-verifies the entire snapshot and unchanged source; preserves only known runtime-marker symlinks without following them; and writes READY.json only after success. Other symlinks fail safely. Each unique snapshot is outside the source under Edge Profile Organiser Backups. D retains its selected-profile backup before native removal. Recovery scope/Keychain/external-policy/cloud limitations are documented.
+
+Expanded tests cover complete/shared/unregistered data, repeated snapshots, cancelled B, no selection prompt, disk space, copy corruption/failure, concurrent writes, runtime links and running Edge. Local suite: 44 discovered, 36 passed, eight optional GUI tests skipped without Tk/display. Native terminal CI pending publication of this change. No real browser data was read or changed.
+
 ## Next action
 
-Alexander updates the existing feature-branch checkout and runs `python3 ProfileOrg/EdgeProfileOrg_V1.0.py --demo`; confirm version `0.4.0-terminal` and test M/S/U/A/B/R/Q. Then close Edge and run without `--demo`, verify OS file access and ordering backups, and test native removal/recovery on a disposable profile. Preserve the earlier password/sync/policy acceptance checklist. GUI packaging/permission diagnostics are no longer active implementation tasks.
+Alexander updates the existing feature-branch checkout and runs `python3 ProfileOrg/EdgeProfileOrg_V1.0.py --demo`; confirm version `0.5.0-terminal` and test M/S/U/A/B/R/Q. Then close Edge and run without `--demo`, verify OS file access and ordering backups, and test native removal/recovery on a disposable profile. Preserve the earlier password/sync/policy acceptance checklist. GUI packaging/permission diagnostics are no longer active implementation tasks.
 
 ## Branch and local work
 
