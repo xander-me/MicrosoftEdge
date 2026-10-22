@@ -43,7 +43,7 @@ class FullBackupTests(unittest.TestCase):
     def test_custom_destination_contains_complete_snapshot(self):
         target = Path(self.temp.name) / 'Other disk' / 'Snapshots'
         backup = backup_all_profiles(self.session, destination=target)
-        self.assertEqual(backup.parent, target)
+        self.assertTrue(backup.parent.samefile(target))
         self.assertTrue((backup / 'READY.json').exists())
         self.assertEqual((backup / 'User Data/Local State').read_bytes(), self.path.read_bytes())
         self.assertFalse((Path(self.temp.name) / 'Edge Profile Organiser Backups').exists())
