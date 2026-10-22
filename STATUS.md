@@ -1,6 +1,6 @@
 # MicrosoftEdge — current work and handoff
 
-Updated: 2026-10-20. Owner: Maintainer. State: Terminal menu is the active interface; real-profile acceptance pending. Earlier GUI work is retained as a prototype. [Scope and launch instructions](README.md).
+Updated: 2026-10-22. Owner: Maintainer. State: Terminal menu is the active interface; real-profile acceptance pending. Earlier GUI work is retained as a prototype. [Scope and launch instructions](README.md).
 
 ## Objective and authorization
 
@@ -45,7 +45,7 @@ Local test suite expanded to 29 checks, including stale preview/review, new/remo
 
 Maintainer reported both stale Local State and macOS Operation not permitted, then explicitly requested skipping the GUI and returning to a simpler terminal version while keeping functionality. Terminal version `0.4.0-terminal` is now the default: detected numbering, starred order, move/pin/unstar, A–Z remainder, retained favourites on refresh, preview/apply, verified ordering backups, full-profile backup and backed-up Edge-native removal. Python 3.10+ standard library only; no Tk or package installation. Finder launchers now start the terminal menu. Historical PowerShell and quick Python flow remain; use the Python menu for complete features. Automatic GUI builds disabled; prior app artifacts are historical, not current delivery.
 
-Terminal does not bypass OS access restrictions. Errors identify their operation/path and do not change permission settings. User-Mac privacy/ownership/flags cause remains unconfirmed. Real-profile password/sync/policy/removal/recovery acceptance is still NOT RUN. New terminal integration checks include site-packages-disabled execution, promotion/unstar, cancellation, demo/full backup, copied-file removal protection, stale preview and backup-gated native removal. Native terminal CI is being published without dependency installation.
+Terminal does not bypass OS access restrictions. Errors identify their operation/path and do not change permission settings. User-Mac privacy/ownership/flags cause remains unconfirmed. Real-profile password/sync/policy/removal/recovery acceptance is still NOT RUN. New terminal integration checks include site-packages-disabled execution, promotion/unstar, cancellation, demo/full backup, copied-file removal protection, stale preview and backup-gated native removal. Native [terminal CI](https://github.com/xander-me/MicrosoftEdge/actions/runs/39396920850) at `43cf876` succeeded without dependency installation: macOS Apple Silicon and Intel each passed all 36 tests; Linux passed 28 with eight optional GUI checks skipped. Each runner also completed the terminal demo with site packages disabled. Tracks [issue #8](https://github.com/xander-me/MicrosoftEdge/issues/8), added to the shared board with the terminal test handoff.
 
 ## Next action
 
@@ -53,4 +53,4 @@ Maintainer updates the existing feature-branch checkout and runs `python3 Profil
 
 ## Branch and local work
 
-GUI work is on `feat/profile-order-gui`, branched from clean, synchronized `feat/starred-profile-order` at `194a3f7`. It depends on PR #3 and will be submitted with that branch as its PR base, keeping the GUI diff separate. Tracks [issue #4](https://github.com/xander-me/MicrosoftEdge/issues/4). No earlier work was moved or overwritten. Implementation and validation are committed and pushed in [PR #5](https://github.com/xander-me/MicrosoftEdge/pull/5), targeting `feat/starred-profile-order`. Both PRs remain open. After #3 merges, retarget #5 to main before merging it. No local/unpushed work remains after this handoff update.
+Profile-management work is on the historically named `feat/profile-order-gui`, branched from clean, synchronized `feat/starred-profile-order` at `194a3f7`. It depends on PR #3 and will be submitted with that branch as its PR base, keeping the GUI diff separate. Tracks [issue #4](https://github.com/xander-me/MicrosoftEdge/issues/4). No earlier work was moved or overwritten. Implementation and validation are committed and pushed in [PR #5](https://github.com/xander-me/MicrosoftEdge/pull/5), targeting `feat/starred-profile-order`. Both PRs remain open. After #3 merges, retarget #5 to main before merging it. No local/unpushed work remains after this handoff update.
