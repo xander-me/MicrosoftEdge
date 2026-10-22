@@ -1,2 +1,11 @@
 __pycache__/
 *.py[cod]
+EdgeProfileOrg.settings.json
+*.backup-before-profile-prefix-*
+.build-mac/
+build/
+dist/
+package/
+*.spec
+Edge-Profile-Organiser-*.zip
+SHA256SUMS.txt
