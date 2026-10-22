@@ -36,7 +36,7 @@ class TerminalMenuTests(unittest.TestCase):
 
     def test_move_to_top_apply_and_unstar(self):
         result = self.run_cli('m\n3\n1\na\ny\nq\n', '--local-state', str(self.path))
-        self.assertIn('0.5.2-terminal', result.stdout)
+        self.assertIn('0.6.0-terminal', result.stdout)
         data = json.loads(self.path.read_bytes())
         self.assertEqual(data['profile']['info_cache']['c']['name'], '01 - New profile')
         self.assertEqual(data['os_crypt'], self.data['os_crypt'])
@@ -66,7 +66,7 @@ class TerminalMenuTests(unittest.TestCase):
         self.assertNotIn('Profile list number', result.stdout)
         ready = list(Path(self.temp.name).rglob('READY.json'))
         self.assertEqual(len(ready), 1)
-        self.assertEqual(json.loads(ready[0].read_bytes())['backup_type'], 'all_profiles')
+        self.assertEqual(json.loads(ready[0].read_bytes())['backup_type'], 'profiles_only')
         for name, content in before.items():
             self.assertEqual((ready[0].parent / 'User Data' / name).read_bytes(), content)
             self.assertEqual((self.path.parent / name).read_bytes(), content)
