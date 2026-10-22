@@ -57,9 +57,15 @@ Expanded tests cover complete/shared/unregistered data, repeated snapshots, canc
 
 Maintainer requested a clearer overview after sharing a multi-profile list plus a duplicated preview. Version `0.5.1-terminal` replaces both with one terminal-width-aware table: stable selection #, starred marker, clean name, current numeric prefix and proposed prefix. Changes/unchanged rows are marked; counts are concise; folder IDs/source path are hidden by default and available via V/--details. The menu is grouped into Order, Save and View. Selection IDs, sorting and saved data behaviour are unchanged. Layout checked using the synthetic demo before/after pinning; existing regression suite passes locally (44 discovered, 36 pass, eight optional GUI tests skipped). Native [CI](https://github.com/xander-me/MicrosoftEdge/actions/runs/39741577720) at `d94ed08` passed all 44 tests on both Mac architectures; Linux passed 36 with eight optional GUI checks skipped, and every runner completed the terminal demo. Tracks [issue #10](https://github.com/xander-me/MicrosoftEdge/issues/10), on the shared board for readability acceptance. No real browser data used.
 
+## Backup destination and size explanation
+
+A request for destination selection and clearer size reporting prompted backup improvements. Version `0.5.2-terminal` prompts for a destination folder before confirmation, supporting ~, spaces, quoted paths and POSIX drag/drop escaping; Enter uses the default/last choice in that run. The backend accepts a custom destination, rejects source-contained/linked/file destinations and checks the selected volume's space. A unique snapshot is created under the chosen folder. Full uncompressed contents are unchanged. Scanning now reports the six largest top-level source folders/files and a human-readable total; no cache exclusions or source cleanup introduced. The user's actual size breakdown is not yet available, so cache dominance is not asserted.
+
+Local regression suite: 47 discovered, 39 passed, eight optional GUI tests skipped. Additional checks cover custom nested/space-containing destinations and source-contained rejection before copy. Native CI pending. Demo backups to a custom destination persist; default temporary demo data is cleaned on exit. No real user-data access in development.
+
 ## Next action
 
-Maintainer updates the existing feature-branch checkout and runs `python3 ProfileOrg/EdgeProfileOrg_V1.0.py --demo`; confirm version `0.5.1-terminal` and test M/S/U/A/B/R/Q. Then close Edge and run without `--demo`, verify OS file access and ordering backups, and test native removal/recovery on a disposable profile. Preserve the earlier password/sync/policy acceptance checklist. GUI packaging/permission diagnostics are no longer active implementation tasks.
+Maintainer updates the existing feature-branch checkout and runs `python3 ProfileOrg/EdgeProfileOrg_V1.0.py --demo`; confirm version `0.5.2-terminal` and test M/S/U/A/B/R/Q. Then close Edge and run without `--demo`, verify OS file access and ordering backups, and test native removal/recovery on a disposable profile. Preserve the earlier password/sync/policy acceptance checklist. GUI packaging/permission diagnostics are no longer active implementation tasks.
 
 ## Branch and local work
 

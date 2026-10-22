@@ -16,7 +16,7 @@ Then close Edge completely and run against your current user's profiles:
 python3 ProfileOrg/EdgeProfileOrg_V1.0.py
 ```
 
-The same Python menu supports Windows (`py` instead of `python3`) and macOS. It detects the standard Edge data location. On Mac, you can also double-click **Try Demo.command** or **Start Edge Profile Organiser.command**; both now open the terminal menu and find a suitable Python without checking/installing Tk. Current terminal version: `0.5.1-terminal` (`--version`).
+The same Python menu supports Windows (`py` instead of `python3`) and macOS. It detects the standard Edge data location. On Mac, you can also double-click **Try Demo.command** or **Start Edge Profile Organiser.command**; both now open the terminal menu and find a suitable Python without checking/installing Tk. Current terminal version: `0.5.2-terminal` (`--version`).
 
 ## Menu
 
@@ -46,7 +46,9 @@ Ordering changes only profile display names and organiser favourites. Existing p
 
 Before any ordering/settings write, the tool creates uniquely named, flushed and byte-verified backups of Local State and any existing organiser settings. Failed backup stops writes; true no-ops write nothing. This backup covers files ordering can overwrite; it is not a full backup of all browser/password data.
 
-**B** copies and hash-verifies the entire Edge user-data folder: every profile (including unregistered folders), shared data, Local State and organiser settings. It asks for one confirmation, checks disk space, prints progress and verifies the source stayed unchanged. Snapshots are unique and stored outside the source folder. Known Chromium runtime links are preserved as links; other symbolic links stop the backup rather than silently omit profile data.
+**B** first asks where to save the backup. Paste a destination folder (external drives and paths with spaces are supported), or press Enter for the displayed default; the last choice remains the default during that run. A unique snapshot folder is created inside it after confirmation. Destinations inside Edge data or pointing to an existing file are rejected.
+
+**B** copies and hash-verifies the entire Edge user-data folder: every profile (including unregistered folders), shared data, Local State and organiser settings. It asks for one confirmation, checks disk space, prints progress and verifies the source stayed unchanged. Snapshots are unique and stored outside the source folder. The size is the total size of an uncompressed copy, including caches, databases, extensions and shared files; it reports the six largest source folders/files to show where space is used. Known Chromium runtime links are preserved as links; other symbolic links stop the backup rather than silently omit profile data.
 
 **D** additionally copies and hash-verifies the selected profile directory before offering removal. Only a successful full snapshot receives a `READY.json` marker. Source profile data is never directly deleted by this tool. **D** offers to open the selected profile's Edge settings after backup; you confirm deletion there, so Edge handles account cleanup and managed restrictions. No cloud deletion request is sent by the organiser. Demo and copied-file modes cannot open removal for real profiles. Full backups contain private browser data: keep them locally.
 
@@ -56,7 +58,7 @@ For ordering recovery: close Edge and restore the printed Local State backup to 
 
 Switching to Terminal does not bypass macOS privacy controls or file permissions. If access is denied, the tool reports the operation and path and leaves permission settings unchanged. Review access for the actual terminal app in System Settings → Privacy & Security; do not use sudo or change profile ownership/permissions as a workaround. Apple documents [app file-access controls](https://support.apple.com/en-ca/guide/security/secddd1d86a6/web).
 
-Use `--local-state "/path/to/copied/Local State"` for copied fixtures; settings/backups stay beside that fixture. `--demo` makes temporary sample profiles and backups, removed on exit. `--quick` retains the earlier one-shot star-selection/apply flow. The PowerShell script remains available for the earlier Windows CLI flow; use the Python menu for the complete current functionality.
+Use `--local-state "/path/to/copied/Local State"` for copied fixtures; settings/backups stay beside that fixture. `--demo` makes temporary sample profiles and default backups, removed on exit. A custom destination chosen in demo mode retains its synthetic backup after exit. `--quick` retains the earlier one-shot star-selection/apply flow. The PowerShell script remains available for the earlier Windows CLI flow; use the Python menu for the complete current functionality.
 
 ```sh
 python3 -m unittest discover -s tests -v
