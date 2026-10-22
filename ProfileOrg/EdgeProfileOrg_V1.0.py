@@ -9,8 +9,9 @@ import sys
 import tempfile
 from profile_order import ProfileSession, default_local_state
 from profile_removal import backup_for_removal, open_native_removal
+from profile_backup import backup_all_profiles
 
-VERSION = '0.4.0-terminal'
+VERSION = '0.5.0-terminal'
 
 
 class TerminalOrganizer:
@@ -83,6 +84,17 @@ class TerminalOrganizer:
         print(f'Starred order saved: {self.session.settings}')
         self.session = ProfileSession(self.session.path, check_browser=not self.demo)
 
+    def full_backup(self):
+        self.refresh()
+        print(f'Back up ALL {len(self.session.profiles)} profiles and all shared Edge data.')
+        print(f'Source folder: {self.session.path.parent}')
+        print('Keep Edge completely closed. Existing backups are never overwritten.')
+        if input('Create and verify a full Edge backup? [y/N] ').strip().lower() != 'y':
+            print('Cancelled; no backup or source changes made.')
+            return
+        self.last_backup = backup_all_profiles(self.session, progress=lambda message: print(message, flush=True))
+        print(f'Full backup verified (ALL profiles): {self.last_backup}')
+
     def backup(self, remove=False):
         if remove and (self.demo or self.session.path.resolve() != default_local_state().resolve()):
             print('Removal is disabled for demo/copied files. You can still test full backup with B.')
@@ -119,7 +131,7 @@ class TerminalOrganizer:
         while True:
             self.show()
             print('\nS Set starred order | M Move/pin | U Unstar | R Refresh')
-            print('A Apply | B Full backup | D Back up & remove | Q Quit')
+            print('A Apply | B Back up ALL profiles | D Back up & remove | Q Quit')
             command = input('Choose: ').strip().lower()
             try:
                 if command == 'q':
@@ -144,7 +156,7 @@ class TerminalOrganizer:
                 elif command == 'a':
                     self.apply()
                 elif command == 'b':
-                    self.backup()
+                    self.full_backup()
                 elif command == 'd':
                     self.backup(remove=True)
                 else:

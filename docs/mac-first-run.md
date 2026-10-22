@@ -10,7 +10,7 @@ git pull --ff-only
 python3 ProfileOrg/EdgeProfileOrg_V1.0.py --demo
 ```
 
-The branch name is historical; the default interface is now Terminal. Use S/M/U to set favourites and move a new profile to the top. Use A to preview/confirm, B for full profile backup, D for backed-up native removal, R for refresh and Q to quit. Demo D is disabled; B works with synthetic data. Demo files disappear on exit.
+The branch name is historical; the default interface is now Terminal. Use S/M/U to set favourites and move a new profile to the top. Use A to preview/confirm, B for backup of ALL profiles, D for backed-up native removal, R for refresh and Q to quit. Demo D is disabled; B backs up all synthetic profiles without asking for a profile number. Demo files disappear on exit.
 
 After the demo, close Edge completely and launch real-profile mode:
 
@@ -21,6 +21,16 @@ python3 ProfileOrg/EdgeProfileOrg_V1.0.py
 Finder alternatives: double-click **Try Demo.command** or **Start Edge Profile Organiser.command**. They locate Python and open the same terminal menu; they do not install anything or apply changes automatically.
 
 If macOS reports Operation not permitted, this is still an OS file-access restriction, not proof Edge is running. The process now runs under your terminal app. Review its access in Privacy & Security; no automatic permission changes or sudo are used. Exact privacy/file-permission diagnosis on a user Mac remains unconfirmed.
+
+## Back up all profiles before the first real test
+
+Quit Edge completely. In the terminal menu choose **B — Back up ALL profiles**, then confirm with `y`. No profile number is needed. Version `0.5.0-terminal` or later provides this all-profile flow.
+
+The tool snapshots the complete Edge user-data directory, including every profile folder, shared Edge files, Local State, saved organiser settings and existing files inside that directory. It checks available space, flushes copied files, verifies hashes and confirms that source data stayed unchanged. Runtime marker links are preserved without following them; other symlinks stop the backup so outside profile data is not silently omitted. Existing backups are not overwritten.
+
+A successful snapshot is stored in **Edge Profile Organiser Backups**, beside the source data directory. The terminal prints its path. It contains **User Data/** and **READY.json**. Treat a copy without READY.json as incomplete. The backup stays local and contains sensitive browser data. It does not include macOS Keychain, externally stored system policies or remote sync data; it is intended for the same Mac and OS account, not password migration to another machine.
+
+For full recovery, close Edge and preserve its current data directory separately first. Restore the complete snapshot's **User Data/** to the location recorded as **original_user_data** in READY.json, rather than merging into a later directory with leftover files. Full restore on a real user Mac remains an acceptance test. Profile-specific native removal and its separate snapshot are described below.
 
 ## Local State changed, even with Edge closed
 

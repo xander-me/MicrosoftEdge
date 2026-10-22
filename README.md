@@ -16,7 +16,7 @@ Then close Edge completely and run against your current user's profiles:
 python3 ProfileOrg/EdgeProfileOrg_V1.0.py
 ```
 
-The same Python menu supports Windows (`py` instead of `python3`) and macOS. It detects the standard Edge data location. On Mac, you can also double-click **Try Demo.command** or **Start Edge Profile Organiser.command**; both now open the terminal menu and find a suitable Python without checking/installing Tk. Current terminal version: `0.4.0-terminal` (`--version`).
+The same Python menu supports Windows (`py` instead of `python3`) and macOS. It detects the standard Edge data location. On Mac, you can also double-click **Try Demo.command** or **Start Edge Profile Organiser.command**; both now open the terminal menu and find a suitable Python without checking/installing Tk. Current terminal version: `0.5.0-terminal` (`--version`).
 
 ## Menu
 
@@ -29,7 +29,7 @@ The displayed list numbers select profiles; they are separate from existing nume
 | U | Unstar a profile, returning it to the alphabetical remainder |
 | R | Refresh disk data while retaining explicit favourite edits for surviving folder IDs |
 | A | Review the preview and confirm application; verified backups precede writes |
-| B | Create and verify a full local backup of a selected profile plus Local State/settings |
+| B | Back up ALL profiles and all shared Edge data in one verified snapshot; no profile selection |
 | D | Back up a selected profile, then optionally open Edge's native removal screen |
 | Q | Quit; asks before discarding an edited starred order |
 
@@ -43,9 +43,11 @@ Ordering changes only profile display names and organiser favourites. Existing p
 
 Before any ordering/settings write, the tool creates uniquely named, flushed and byte-verified backups of Local State and any existing organiser settings. Failed backup stops writes; true no-ops write nothing. This backup covers files ordering can overwrite; it is not a full backup of all browser/password data.
 
-**B/D** additionally copy and hash-verify the selected profile directory. Only a successful full snapshot receives a `READY.json` marker. Source profile data is never directly deleted by this tool. **D** offers to open the selected profile's Edge settings after backup; you confirm deletion there, so Edge handles account cleanup and managed restrictions. No cloud deletion request is sent by the organiser. Demo and copied-file modes cannot open removal for real profiles. Full backups contain private browser data: keep them locally.
+**B** copies and hash-verifies the entire Edge user-data folder: every profile (including unregistered folders), shared data, Local State and organiser settings. It asks for one confirmation, checks disk space, prints progress and verifies the source stayed unchanged. Snapshots are unique and stored outside the source folder. Known Chromium runtime links are preserved as links; other symbolic links stop the backup rather than silently omit profile data.
 
-For ordering recovery: close Edge and restore the printed Local State backup to its original name; restore matching organiser settings too (or remove the new settings file if none existed before). Full profile recovery is for the same machine/OS account and snapshot; it does not back up Keychain or remote sync state. Restoring Local State also restores its entire profile registry, so later profile additions/removals need reconciliation. See [Mac usage and recovery](docs/mac-first-run.md) and [required preservation acceptance](docs/profile-preservation-validation.md).
+**D** additionally copies and hash-verifies the selected profile directory before offering removal. Only a successful full snapshot receives a `READY.json` marker. Source profile data is never directly deleted by this tool. **D** offers to open the selected profile's Edge settings after backup; you confirm deletion there, so Edge handles account cleanup and managed restrictions. No cloud deletion request is sent by the organiser. Demo and copied-file modes cannot open removal for real profiles. Full backups contain private browser data: keep them locally.
+
+For ordering recovery: close Edge and restore the printed Local State backup to its original name; restore matching organiser settings too (or remove the new settings file if none existed before). A full **B** snapshot contains a `User Data` folder and `READY.json`; use the manifest’s `original_user_data` to identify its restore location. Restore the complete directory with Edge closed, preserving the current directory separately rather than merging stale files. Full recovery is for the same machine/OS account and snapshot; it does not back up Keychain or remote sync state. Restoring Local State also restores its entire profile registry, so later profile additions/removals need reconciliation. See [Mac usage and recovery](docs/mac-first-run.md) and [required preservation acceptance](docs/profile-preservation-validation.md).
 
 ## File access and test modes
 

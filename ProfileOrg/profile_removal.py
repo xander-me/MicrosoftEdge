@@ -13,11 +13,14 @@ from datetime import datetime, timezone
 from profile_order import atomic_json, require_edge_closed
 
 
-def fingerprint(folder):
+def fingerprint(folder, allowed_links=frozenset()):
     """Hash every regular file, retaining directory names; refuse linked/special data."""
     result = {}
     for path in sorted(folder.rglob('*')):
         key = path.relative_to(folder).as_posix()
+        if path.is_symlink() and key in allowed_links:
+            result[key] = {'symlink': os.readlink(path)}
+            continue
         if path.is_symlink():
             raise ValueError(f'Profile contains a symbolic link; backup cannot be guaranteed: {key}')
         if path.is_dir():

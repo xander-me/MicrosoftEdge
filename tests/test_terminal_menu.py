@@ -36,7 +36,7 @@ class TerminalMenuTests(unittest.TestCase):
 
     def test_move_to_top_apply_and_unstar(self):
         result = self.run_cli('m\n3\n1\na\ny\nq\n', '--local-state', str(self.path))
-        self.assertIn('0.4.0-terminal', result.stdout)
+        self.assertIn('0.5.0-terminal', result.stdout)
         data = json.loads(self.path.read_bytes())
         self.assertEqual(data['profile']['info_cache']['c']['name'], '01 - New profile')
         self.assertEqual(data['os_crypt'], self.data['os_crypt'])
@@ -55,9 +55,26 @@ class TerminalMenuTests(unittest.TestCase):
         self.assertFalse(list(self.path.parent.glob('Local State.backup-*')))
 
     def test_demo_backup_and_removal_protection(self):
-        result = self.run_cli('d\nb\n1\ny\nq\n', '--demo')
+        result = self.run_cli('d\nb\ny\nq\n', '--demo')
         self.assertIn('Removal is disabled', result.stdout)
-        self.assertIn('Full backup verified:', result.stdout)
+        self.assertIn('Full backup verified (ALL profiles):', result.stdout)
+        self.assertNotIn('Profile list number', result.stdout)
+
+    def test_full_backup_menu_copies_all_profiles_without_selection(self):
+        before = {p.relative_to(self.path.parent): p.read_bytes() for p in self.path.parent.rglob('*') if p.is_file()}
+        result = self.run_cli('b\ny\nq\n', '--local-state', str(self.path))
+        self.assertNotIn('Profile list number', result.stdout)
+        ready = list(Path(self.temp.name).rglob('READY.json'))
+        self.assertEqual(len(ready), 1)
+        self.assertEqual(json.loads(ready[0].read_bytes())['backup_type'], 'all_profiles')
+        for name, content in before.items():
+            self.assertEqual((ready[0].parent / 'User Data' / name).read_bytes(), content)
+            self.assertEqual((self.path.parent / name).read_bytes(), content)
+
+    def test_cancel_full_backup_creates_no_snapshot(self):
+        result = self.run_cli('b\nn\nq\n', '--local-state', str(self.path))
+        self.assertNotIn('Profile list number', result.stdout)
+        self.assertFalse((Path(self.temp.name) / 'Edge Profile Organiser Backups').exists())
 
     def test_copied_profile_cannot_launch_native_removal(self):
         result = self.run_cli('d\nq\n', '--local-state', str(self.path))
