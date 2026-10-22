@@ -75,11 +75,21 @@ class LiveTests(unittest.TestCase):
             until(b'[y/N]')
             os.write(master, b'y\n')
             until(b'Press Enter to return')
-            os.write(master, b'\nq')
-            self.assertEqual(process.wait(timeout=15), 0, output.decode(errors='replace'))
+            os.write(master, b'\n')
+            until(b'Returned from Apply preview')
+            os.write(master, b'q')
+            deadline = time.monotonic() + 15
+            while process.poll() is None:
+                self.assertLess(time.monotonic(), deadline, output.decode(errors='replace'))
+                if select.select([master], [], [], 0.1)[0]:
+                    try:
+                        output.extend(os.read(master, 65536))
+                    except OSError:
+                        break
+            self.assertEqual(process.wait(timeout=5), 0, output.decode(errors='replace'))
             data = json.loads(self.path.read_bytes())
             self.assertEqual(data['profile']['info_cache']['b']['name'], '01 - Beta')
         finally:
             if process.poll() is None:
-                process.terminate()
+                process.kill()
                 process.wait(timeout=5)
