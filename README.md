@@ -16,11 +16,13 @@ Then close Edge completely and run against your current user's profiles:
 python3 ProfileOrg/EdgeProfileOrg_V1.0.py
 ```
 
-The same Python menu supports Windows (`py` instead of `python3`) and macOS. It detects the standard Edge data location. On Mac, you can also double-click **Try Demo.command** or **Start Edge Profile Organiser.command**; both now open the terminal menu and find a suitable Python without checking/installing Tk. Current terminal version: `0.5.0-terminal` (`--version`).
+The same Python menu supports Windows (`py` instead of `python3`) and macOS. It detects the standard Edge data location. On Mac, you can also double-click **Try Demo.command** or **Start Edge Profile Organiser.command**; both now open the terminal menu and find a suitable Python without checking/installing Tk. Current terminal version: `0.5.1-terminal` (`--version`).
 
 ## Menu
 
-The displayed list numbers select profiles; they are separate from existing numeric name prefixes. Existing prefixes and duplicate counts are detected. Preview shows the resulting names before application.
+One table combines existing profiles and the rename preview: **#** is the stable selection number, **\*** marks favourites, **Profile** shows the name without its numeric prefix, **Now** shows the current prefix and **Next** shows the proposed prefix. Arrows mark changes; equals marks unchanged names. Summary counts appear above the table.
+
+Use the left **#** column for all selections—it is separate from Now/Next. Names fit the terminal width. Folder IDs and the source path are hidden by default; **V** toggles details/full names, or start with `--details`. Existing prefixes and duplicate counts are still detected. No colour or extra packages are required.
 
 | Key | Action |
 | --- | --- |
@@ -31,6 +33,7 @@ The displayed list numbers select profiles; they are separate from existing nume
 | A | Review the preview and confirm application; verified backups precede writes |
 | B | Back up ALL profiles and all shared Edge data in one verified snapshot; no profile selection |
 | D | Back up a selected profile, then optionally open Edge's native removal screen |
+| V | Toggle full names, folder IDs and source path |
 | Q | Quit; asks before discarding an edited starred order |
 
 To promote a new profile to 01, choose **M**, enter its list number, then starred position **1**. Review the preview, choose **A**, and confirm with `y`. Favourites are remembered by stable folder ID in `EdgeProfileOrg.settings.json` beside Local State. New unstarred profiles join the A–Z remainder.

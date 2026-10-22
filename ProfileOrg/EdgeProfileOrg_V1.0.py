@@ -3,6 +3,7 @@
 import argparse
 import errno
 import json
+import shutil
 from pathlib import Path
 import subprocess
 import sys
@@ -11,34 +12,51 @@ from profile_order import ProfileSession, default_local_state
 from profile_removal import backup_for_removal, open_native_removal
 from profile_backup import backup_all_profiles
 
-VERSION = '0.5.0-terminal'
+VERSION = '0.5.1-terminal'
 
 
 class TerminalOrganizer:
-    def __init__(self, path, demo=False):
+    def __init__(self, path, demo=False, details=False):
         self.demo = demo
+        self.details = details
         self.session = ProfileSession(path, check_browser=not demo)
         self.last_backup = None
 
     def show(self):
         session = self.session
-        numbers = [p['number'] for p in session.profiles if p['number'] is not None]
-        print(f'\nEdge Profile Organiser {VERSION}' + (' [DEMO: temporary data]' if self.demo else ''))
-        print(f'File: {session.path}')
-        print(f'Existing numbering: {len(numbers)}/{len(session.profiles)} profiles; '
-              f'{len(numbers) - len(set(numbers))} duplicate numbers.')
-        for index, profile in enumerate(session.profiles, 1):
+        profiles = session.profiles
+        numbers = [p['number'] for p in profiles if p['number'] is not None]
+        duplicates = len(numbers) - len(set(numbers))
+        positions = {profile['folder']: index for index, (profile, _) in enumerate(session.preview(), 1)}
+        terminal_width = shutil.get_terminal_size((100, 24)).columns
+        name_width = max(14, min(max(len(p['clean']) for p in profiles), terminal_width - 24))
+        print(f'\nEdge Profile Organiser {VERSION}' + ('  [DEMO]' if self.demo else ''))
+        print(f'{len(profiles)} profiles | {len(session.starred)} starred | {session.rename_count} pending name changes')
+        print(f'{len(numbers)}/{len(profiles)} profiles numbered | {len(profiles) - len(numbers)} unnumbered' +
+              (f' | WARNING: {duplicates} duplicate numbers' if duplicates else ''))
+        if self.details:
+            print(f'File: {session.path}')
+        print()
+        print(f"  #  *  {'Profile':<{name_width}}  {'Now':>4}    {'Next':>4}")
+        print(f"{'-' * 6}  {'-' * name_width}  {'-' * 4}    {'-' * 4}")
+        for index, profile in enumerate(profiles, 1):
             marker = '*' if profile['folder'] in session.starred else ' '
-            print(f"{index:>3}. {marker} {profile['name']} [{profile['folder']}]")
-        print('\nPreview:')
-        for profile, name in session.preview():
-            print(f"  {profile['name']} -> {name}")
-        print(f'{session.rename_count} names will change; {len(session.starred)} starred.')
+            name = profile['clean']
+            if len(name) > name_width and not self.details:
+                name = name[:name_width - 1] + '…'
+            now = f"{profile['number']:02d}" if profile['number'] is not None else '-'
+            next_number = positions[profile['folder']]
+            next_label = f'{next_number:02d}'
+            new_name = f"{next_number:02d} - {profile['clean']}"
+            arrow = '->' if profile['name'] != new_name else ' ='
+            detail = f"  [{profile['folder']}]" if self.details else ''
+            print(f"{index:>3}  {marker}  {name:<{name_width}}  {now:>4} {arrow} {next_label:>4}{detail}")
+        print('\n# = selection number   * = starred   - = unnumbered   -> = change   = = unchanged')
         if self.last_backup:
             print(f'Last verified backup: {self.last_backup}')
 
     def select(self):
-        value = input('Profile list number (Enter cancels): ').strip()
+        value = input('Select # from the left column (Enter cancels): ').strip()
         if not value:
             return None
         if not value.isdecimal() or not 1 <= int(value) <= len(self.session.profiles):
@@ -130,13 +148,16 @@ class TerminalOrganizer:
     def run(self):
         while True:
             self.show()
-            print('\nS Set starred order | M Move/pin | U Unstar | R Refresh')
-            print('A Apply | B Back up ALL profiles | D Back up & remove | Q Quit')
+            print('\nOrder:  S Set stars   M Move/pin   U Unstar   R Refresh')
+            print('Save:   A Apply      B Back up ALL          D Remove (with backup)')
+            print('View:   V Details on/off                   Q Quit')
             command = input('Choose: ').strip().lower()
             try:
                 if command == 'q':
                     if not self.session.has_unsaved_edits or input('Discard unsaved starred order and quit? [y/N] ').strip().lower() == 'y':
                         return
+                elif command == 'v':
+                    self.details = not self.details
                 elif command == 's':
                     self.stars()
                 elif command == 'm':
@@ -160,7 +181,7 @@ class TerminalOrganizer:
                 elif command == 'd':
                     self.backup(remove=True)
                 else:
-                    print('Choose S, M, U, R, A, B, D or Q.')
+                    print('Choose S, M, U, R, A, B, D, V or Q.')
             except (OSError, ValueError, subprocess.SubprocessError) as error:
                 self.report_error(error, {'a': 'Apply', 'b': 'full backup', 'd': 'profile removal', 'r': 'refresh'}.get(command, 'selection'))
 
@@ -171,6 +192,7 @@ def main():
     source = parser.add_mutually_exclusive_group()
     source.add_argument('--local-state', type=Path, help='Use a copied Local State file')
     source.add_argument('--demo', action='store_true', help='Use disposable sample profiles; never access real Edge data')
+    parser.add_argument('--details', action='store_true', help='Show file path, full names and profile folder IDs')
     parser.add_argument('--quick', action='store_true', help='One-shot star selection and apply (legacy CLI flow)')
     args = parser.parse_args()
     organizer = None
@@ -188,7 +210,7 @@ def main():
         else:
             path = args.local_state or default_local_state()
         try:
-            organizer = TerminalOrganizer(path, demo=args.demo)
+            organizer = TerminalOrganizer(path, demo=args.demo, details=args.details)
         except (OSError, ValueError) as error:
             print(f'Cannot load profiles: {error}', file=sys.stderr)
             if isinstance(error, OSError) and error.errno in (errno.EPERM, errno.EACCES):
