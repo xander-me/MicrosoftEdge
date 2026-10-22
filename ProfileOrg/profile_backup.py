@@ -1,3 +1,4 @@
+# Author: Using-IT
 """Verified snapshots of registered Edge profiles and essential recovery metadata."""
 from datetime import datetime, timezone
 from pathlib import Path

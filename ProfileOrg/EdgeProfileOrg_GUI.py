@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Author: Using-IT
 """Desktop Edge profile organiser: drag favourites into order and preview names."""
 import argparse
 import json

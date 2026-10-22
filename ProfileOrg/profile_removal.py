@@ -1,3 +1,4 @@
+# Author: Using-IT
 """Verified local backup followed by Edge's native profile-removal screen.
 
 Never directly delete folders or edit Edge's profile registration/policy records.

@@ -1,4 +1,5 @@
 #!/bin/bash
+# Author: Using-IT
 set -euo pipefail
 project_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$project_dir"

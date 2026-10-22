@@ -1,3 +1,4 @@
+# Author: Using-IT
 """Live keyboard preview in a native terminal, using Python's standard curses module."""
 import subprocess
 

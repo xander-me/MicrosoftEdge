@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Author: Using-IT
 """Terminal Edge profile organiser: starred profiles first, then A-Z."""
 import argparse
 import errno
