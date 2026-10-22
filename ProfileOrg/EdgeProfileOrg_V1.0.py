@@ -1,113 +1,112 @@
 #!/usr/bin/env python3
-"""
-Script to rename Microsoft Edge profiles with alphabetically sorted numeric prefixes.
-This script organizes Microsoft Edge profiles on macOS by renaming them with numeric prefixes
-based on alphabetical order of their names. For example, "Profile A" becomes "01 - Profile A",
-"Profile B" becomes "02 - Profile B", and so on.
-
-Features:
-- Automatically detects existing profiles from Edge's Local State file.
-- Removes any existing numeric prefixes before re-applying them in sorted order.
-- Creates a timestamped backup of the Local State file before making changes.
-- Sorts profiles case-insensitively for consistent ordering.
-
-Prerequisites:
-- macOS operating system.
-- Python 3 installed.
-- Microsoft Edge browser installed and configured with profiles.
-
-Usage:
-1. Close Microsoft Edge completely to avoid conflicts:
-   Run: osascript -e 'quit app "Microsoft Edge"'
-
-2. Run the script:
-   python3 the below script as: EdgeProfileOrg_V1.0.py
-
-3. After the script completes, reopen Microsoft Edge and verify the profile names in the profile switcher.
-
-Warnings:
-- This script modifies Edge's configuration files. 
-- If Edge is running while the script executes, changes may not take effect or could cause issues.
-- Test on a non-critical setup first.
-
-Troubleshooting:
-- If "Local State not found" error occurs, ensure Edge is installed and has been run at least once.
-- If no profiles are found, check that profiles exist in Edge.
-- In case of errors, restore from the backup file created by the script.
-
-Version: 1.0 - 11.05.2026
-Author: Alexander Christensen - www.using-it.dk
-"""
+"""Preview and apply Edge profile numbering, with remembered favourites first."""
+import argparse
 import json
+import os
+import re
 import shutil
+import tempfile
 from pathlib import Path
-from datetime import datetime
+from uuid import uuid4
 
-# Path to Microsoft Edge's Local State configuration file
-local_state = Path.home() / "Library/Application Support/Microsoft Edge/Local State"
 
-# Verify the Local State file exists
-if not local_state.exists():
-    raise SystemExit(f"Local State not found: {local_state}")
+def profiles_from(data):
+    cache = data.get('profile', {}).get('info_cache', {})
+    if not isinstance(cache, dict) or not cache:
+        raise ValueError('No Edge profiles found in Local State.')
+    profiles = []
+    for folder, info in cache.items():
+        name = info.get('name', folder)
+        if not isinstance(name, str):
+            raise ValueError(f'Invalid profile name: {folder}')
+        match = re.match(r'^(\d+)\s*-\s*', name)
+        profiles.append(dict(folder=folder, name=name,
+                             clean=re.sub(r'^\d+\s*-\s*', '', name),
+                             number=int(match[1]) if match else None))
+    return sorted(profiles, key=lambda p: (p['number'] is None,
+                  p['number'] or 0, p['clean'].casefold(), p['folder']))
 
-# Create a timestamped backup before making changes
-backup = local_state.with_name(
-    f"Local State.backup-before-profile-prefix-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
-)
 
-shutil.copy2(local_state, backup)
-print(f"Backup created: {backup}")
+def ordered_profiles(profiles, starred):
+    by_folder = {p['folder']: p for p in profiles}
+    first = [by_folder[f] for f in starred if f in by_folder]
+    return first + sorted((p for p in profiles if p['folder'] not in starred),
+                          key=lambda p: (p['clean'].casefold(), p['folder']))
 
-# Load the Local State JSON file
-with local_state.open("r", encoding="utf-8") as f:
-    data = json.load(f)
 
-# Extract profile info cache from the config
-info_cache = data.get("profile", {}).get("info_cache", {})
-
-if not info_cache:
-    raise SystemExit("No Edge profiles found in Local State.")
-
-profiles = []
-
-def has_numeric_prefix(name):
-    """Check if the name starts with a numeric prefix like '01 - '."""
-    return len(name) > 5 and name[:2].isdigit() and name[2:5] == " - "
-
-# Extract profile information and clean up existing prefixes
-for folder, info in info_cache.items():
-    name = info.get("name", folder)
-    clean_name = name
-
-    # Remove existing numeric prefix, e.g. "01 - "
-    if has_numeric_prefix(name):
-        clean_name = name[5:]
-
-    profiles.append({
-        "folder": folder,
-        "current_name": name,
-        "clean_name": clean_name
-    })
-
-# Sort profiles alphabetically by clean name (case-insensitive)
-profiles_sorted = sorted(profiles, key=lambda x: x["clean_name"].casefold())
-
-print("\nNew profile names:\n")
-
-# Assign new numeric prefixes (01, 02, 03...) based on alphabetical order
-for idx, profile in enumerate(profiles_sorted, 1):
-    new_name = f"{idx:02d} - {profile['clean_name']}"
-    folder = profile["folder"]
-    print(f"{profile['current_name']} -> {new_name}")
+def atomic_json(path, data):
+    fd, temporary = tempfile.mkstemp(dir=path.parent, prefix=path.name + '.temp-')
     try:
-        # Update the profile name in the data structure
-        data["profile"]["info_cache"][folder]["name"] = new_name
-    except (KeyError, TypeError):
-        print(f"Warning: Could not update name for profile folder '{folder}'. Structure missing or malformed.")
+        with os.fdopen(fd, 'w', encoding='utf-8') as stream:
+            json.dump(data, stream, ensure_ascii=False, indent=2)
+            stream.flush()
+            os.fsync(stream.fileno())
+        if path.exists():
+            shutil.copymode(path, temporary)
+        os.replace(temporary, path)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
 
-# Write the updated configuration back to the Local State file
-with local_state.open("w", encoding="utf-8") as f:
-    json.dump(data, f, ensure_ascii=False, indent=2, sort_keys=True)
 
-print("\nDone. Open Microsoft Edge and check the profile list.")
-print(f"Backup file: {backup}") 
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--local-state', type=Path, default=Path.home() /
+                        'Library/Application Support/Microsoft Edge/Local State')
+    args = parser.parse_args()
+    path = args.local_state
+    original = path.read_bytes()
+    data = json.loads(original)
+    profiles = profiles_from(data)
+    settings = path.with_name('EdgeProfileOrg.settings.json')
+    saved = json.loads(settings.read_text(encoding='utf-8-sig')) if settings.exists() else {}
+    starred = saved.get('starred', [])
+    if not isinstance(starred, list) or any(not isinstance(f, str) for f in starred) or len(set(starred)) != len(starred):
+        raise ValueError('Invalid starred profile settings.')
+    numbers = [p['number'] for p in profiles if p['number'] is not None]
+    print(f'Existing numbering: {len(numbers)}/{len(profiles)} profiles; '
+          f'{len(numbers) - len(set(numbers))} duplicate numbers.')
+    for index, profile in enumerate(profiles, 1):
+        marker = '*' if profile['folder'] in starred else ' '
+        print(f"{index}. {marker} {profile['name']} [{profile['folder']}]")
+    while True:
+        choice = input('Starred profiles in top-first order (e.g. 3,1); Enter keeps saved stars; none clears: ').strip()
+        if not choice:
+            break
+        if choice.lower() == 'none':
+            starred = []
+            break
+        try:
+            selected = [int(value.strip()) for value in choice.split(',')]
+            if len(set(selected)) != len(selected) or any(i < 1 or i > len(profiles) for i in selected):
+                raise ValueError()
+            starred = [profiles[i - 1]['folder'] for i in selected]
+            break
+        except ValueError:
+            print('Enter unique list numbers separated by commas.')
+    starred = [f for f in starred if any(p['folder'] == f for p in profiles)]
+    changed = False
+    print('\nProposed names:')
+    for index, profile in enumerate(ordered_profiles(profiles, starred), 1):
+        name = f"{index:02d} - {profile['clean']}"
+        print(f"{profile['name']} -> {name}")
+        changed |= profile['name'] != name
+        data['profile']['info_cache'][profile['folder']]['name'] = name
+    if input('Close Edge completely. Apply names and save starred order? [y/N] ').strip().lower() != 'y':
+        print('Cancelled; no files changed.')
+        return
+    if path.read_bytes() != original:
+        raise ValueError('Local State changed during preview. Run again with Edge closed.')
+    if changed:
+        backup = path.with_name(path.name + '.backup-before-profile-prefix-' + uuid4().hex)
+        shutil.copy2(path, backup)
+        print(f'Backup created: {backup}')
+        atomic_json(path, data)
+    else:
+        print('Profile names already match; Local State unchanged.')
+    atomic_json(settings, {'starred': starred})
+    print(f'Starred order saved: {settings}')
+
+
+if __name__ == '__main__':
+    main()
