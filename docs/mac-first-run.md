@@ -20,7 +20,7 @@ python3 ProfileOrg/EdgeProfileOrg_V1.0.py
 
 Finder alternatives: double-click **Try Demo.command** or **Start Edge Profile Organiser.command**. They locate Python and open the same terminal menu; they do not install anything or apply changes automatically.
 
-If macOS reports Operation not permitted, this is still an OS file-access restriction, not proof Edge is running. The process now runs under your terminal app. Review its access in Privacy & Security; no automatic permission changes or sudo are used. Exact privacy/file-permission diagnosis on Alexander's Mac remains unconfirmed.
+If macOS reports Operation not permitted, this is still an OS file-access restriction, not proof Edge is running. The process now runs under your terminal app. Review its access in Privacy & Security; no automatic permission changes or sudo are used. Exact privacy/file-permission diagnosis on a user Mac remains unconfirmed.
 
 ## Back up all profiles before the first real test
 

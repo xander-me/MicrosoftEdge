@@ -1,3 +1,4 @@
+# Author: Using-IT
 """Bundled demo entry point uses disposable sample data only."""
 import sys
 from EdgeProfileOrg_GUI import main

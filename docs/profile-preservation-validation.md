@@ -1,6 +1,6 @@
 # Required profile-preservation acceptance
 
-Status: NOT RUN in real Windows/macOS Edge. Owner: Alexander. Synthetic regression checks pass; they do not prove browser behaviour. Do not mark password/sync/policy compatibility accepted until this checklist has evidence for the target Edge/OS versions.
+Status: NOT RUN in real Windows/macOS Edge. Owner: Maintainer. Synthetic regression checks pass; they do not prove browser behaviour. Do not mark password/sync/policy compatibility accepted until this checklist has evidence for the target Edge/OS versions.
 
 ## What the organiser changes
 
