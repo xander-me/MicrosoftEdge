@@ -6,13 +6,16 @@ Requires PowerShell 5.1+. Run as the intended user with Edge closed.
 #>
 param([string]$LocalStatePath = (Join-Path $env:LOCALAPPDATA 'Microsoft\Edge\User Data\Local State'))
 $ErrorActionPreference = 'Stop'
+$OriginalBytes = [IO.File]::ReadAllBytes($LocalStatePath)
 $Original = [IO.File]::ReadAllText($LocalStatePath)
 $Json = $Original | ConvertFrom-Json
 $InfoCache = $Json.profile.info_cache
 if (-not $InfoCache -or @($InfoCache.PSObject.Properties).Count -eq 0) { throw 'No Edge profiles found.' }
 $SettingsPath = Join-Path (Split-Path $LocalStatePath) 'EdgeProfileOrg.settings.json'
 $Starred = @()
+$OriginalSettingsBytes = $null
 if (Test-Path -LiteralPath $SettingsPath) {
+    $OriginalSettingsBytes = [IO.File]::ReadAllBytes($SettingsPath)
     $Settings = Get-Content -LiteralPath $SettingsPath -Raw -Encoding UTF8 | ConvertFrom-Json
     if ($null -ne $Settings.starred -and $Settings.starred -isnot [array]) { throw 'Invalid starred profile settings.' }
     $Starred = @($Settings.starred)
@@ -73,11 +76,28 @@ function Write-JsonFile($Path, $Value) {
         if (Test-Path -LiteralPath $TempPath) { Remove-Item -LiteralPath $TempPath }
     }
 }
-if ($Changed) {
-    $BackupPath = "$LocalStatePath.backup-before-profile-prefix-$([guid]::NewGuid().ToString('N'))"
-    Copy-Item -LiteralPath $LocalStatePath -Destination $BackupPath
-    Write-Host "Backup created: $BackupPath"
-    Write-JsonFile $LocalStatePath $Json
-} else { Write-Host 'Profile names already match; Local State unchanged.' }
-Write-JsonFile $SettingsPath @{starred = @($Starred)}
+function Write-VerifiedBackup($Path, [byte[]]$Bytes, $Token) {
+    $Backup = "$Path.backup-before-profile-prefix-$Token"
+    $Stream = [IO.File]::Open($Backup, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write)
+    try { $Stream.Write($Bytes, 0, $Bytes.Length); $Stream.Flush($true) } finally { $Stream.Dispose() }
+    if ([Convert]::ToBase64String([IO.File]::ReadAllBytes($Backup)) -cne [Convert]::ToBase64String($Bytes)) {
+        throw "Backup verification failed: $Backup. No changes applied."
+    }
+    return $Backup
+}
+$SavedStars = if ($null -ne $OriginalSettingsBytes) { ConvertTo-Json -InputObject @($Settings.starred) -Compress } else { '' }
+$DesiredStars = ConvertTo-Json -InputObject @($Starred) -Compress
+if (-not $Changed -and $SavedStars -ceq $DesiredStars) { Write-Host 'Names and favourites already match; no files changed.'; return }
+$Token = [guid]::NewGuid().ToString('N')
+$BackupPath = Write-VerifiedBackup $LocalStatePath $OriginalBytes $Token
+if ($null -ne $OriginalSettingsBytes) { $null = Write-VerifiedBackup $SettingsPath $OriginalSettingsBytes $Token }
+# Recheck after backup so a stale snapshot cannot overwrite a concurrent change.
+if ([Convert]::ToBase64String([IO.File]::ReadAllBytes($LocalStatePath)) -cne [Convert]::ToBase64String($OriginalBytes)) { throw 'Local State changed during backup. No changes applied.' }
+if ($null -ne $OriginalSettingsBytes) {
+    if (-not (Test-Path -LiteralPath $SettingsPath) -or [Convert]::ToBase64String([IO.File]::ReadAllBytes($SettingsPath)) -cne [Convert]::ToBase64String($OriginalSettingsBytes)) { throw 'Saved favourites changed. Reload before applying.' }
+} elseif (Test-Path -LiteralPath $SettingsPath) { throw 'Saved favourites changed. Reload before applying.' }
+Write-Host "Backup created and verified: $BackupPath"
+if ($Changed) { Write-JsonFile $LocalStatePath $Json }
+try { Write-JsonFile $SettingsPath @{starred = @($Starred)} }
+catch { throw "Could not save favourites. Names may already have been applied. Backup: $BackupPath. $_" }
 Write-Host "Starred order saved: $SettingsPath"
