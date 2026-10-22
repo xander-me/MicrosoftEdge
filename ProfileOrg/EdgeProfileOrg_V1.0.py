@@ -13,7 +13,7 @@ from profile_order import ProfileSession, default_local_state
 from profile_removal import backup_for_removal, open_native_removal
 from profile_backup import backup_all_profiles, backup_destination
 
-VERSION = '0.5.2-terminal'
+VERSION = '0.6.0-terminal'
 
 
 class TerminalOrganizer:
@@ -106,7 +106,8 @@ class TerminalOrganizer:
 
     def full_backup(self):
         self.refresh()
-        print(f'Back up ALL {len(self.session.profiles)} profiles and all shared Edge data.')
+        print(f'Back up ALL {len(self.session.profiles)} registered Edge profiles.')
+        print('Includes their folders plus Local State and saved organiser settings for recovery. Other shared/root folders are excluded.')
         print(f'Source folder: {self.session.path.parent}')
         print('Keep Edge completely closed. Existing backups are never overwritten.')
         default_folder = backup_destination(self.session.path.parent, self.backup_folder)
@@ -121,20 +122,20 @@ class TerminalOrganizer:
                 value = value[1:-1]
         self.backup_folder = backup_destination(self.session.path.parent, value or default_folder)
         print(f'Backup location: {self.backup_folder} (a new snapshot folder will be created inside)')
-        if input('Create and verify a full Edge backup? [y/N] ').strip().lower() != 'y':
+        if input('Create and verify this profile backup? [y/N] ').strip().lower() != 'y':
             print('Cancelled; no backup or source changes made.')
             return
         self.last_backup = backup_all_profiles(self.session, progress=lambda message: print(message, flush=True), destination=self.backup_folder)
         print(f'Full backup verified (ALL profiles): {self.last_backup}')
 
-    def backup(self, remove=False):
+    def backup(self, remove=False, folder=None):
         if remove and (self.demo or self.session.path.resolve() != default_local_state().resolve()):
             print('Removal is disabled for demo/copied files. You can still test full backup with B.')
             return
         if self.refresh():
             print('Review the refreshed profile list before choosing a profile to back up.')
             return
-        folder = self.select()
+        folder = self.select() if folder is None else folder
         if folder is None:
             return
         print(f'Full local backup of [{folder}], Local State and organiser settings. Keep Edge closed.')
@@ -207,6 +208,9 @@ def main():
     source.add_argument('--local-state', type=Path, help='Use a copied Local State file')
     source.add_argument('--demo', action='store_true', help='Use disposable sample profiles; never access real Edge data')
     parser.add_argument('--details', action='store_true', help='Show file path, full names and profile folder IDs')
+    navigation = parser.add_mutually_exclusive_group()
+    navigation.add_argument('--plain', action='store_true', help='Use the line-command menu instead of live keyboard navigation')
+    navigation.add_argument('--live', action='store_true', help='Require live keyboard navigation in a real terminal')
     parser.add_argument('--quick', action='store_true', help='One-shot star selection and apply (legacy CLI flow)')
     args = parser.parse_args()
     organizer = None
@@ -234,6 +238,19 @@ def main():
             organizer.show()
             organizer.stars()
             organizer.apply()
+        elif not args.plain and sys.stdin.isatty() and sys.stdout.isatty():
+            try:
+                import curses
+            except ImportError:
+                if args.live:
+                    parser.error('This Python has no curses support; use --plain.')
+                print('Live navigation is unavailable in this Python; using the plain menu (--plain).')
+                organizer.run()
+            else:
+                from terminal_live import run_live
+                run_live(organizer, VERSION)
+        elif args.live:
+            parser.error('--live requires a real interactive terminal; use --plain for piped input.')
         else:
             organizer.run()
     except (EOFError, KeyboardInterrupt):

@@ -26,14 +26,19 @@ class FullBackupTests(unittest.TestCase):
             path.write_bytes(b'synthetic ' + name.encode())
         self.session = ProfileSession(self.path, check_browser=False)
 
-    def test_all_profiles_shared_and_unregistered_data_are_preserved(self):
+    def test_registered_profiles_only_with_essential_metadata(self):
         original = {p.relative_to(self.root): p.read_bytes() for p in self.root.rglob('*') if p.is_file()}
         backup = backup_all_profiles(self.session)
         manifest = json.loads((backup / 'READY.json').read_bytes())
         self.assertEqual(manifest['profiles'], ['Default', 'Profile 1'])
-        self.assertEqual(manifest['file_count'], len(original))
+        included = {name: content for name, content in original.items() if name.parts[0] in ('Default', 'Profile 1', 'Local State')}
+        self.assertEqual(manifest['file_count'], len(included))
+        self.assertEqual(manifest['backup_type'], 'profiles_only')
         for name, content in original.items():
-            self.assertEqual((backup / 'User Data' / name).read_bytes(), content)
+            if name in included:
+                self.assertEqual((backup / 'User Data' / name).read_bytes(), content)
+            else:
+                self.assertFalse((backup / 'User Data' / name).exists())
             self.assertEqual((self.root / name).read_bytes(), content)
         first_manifest_bytes = (backup / 'READY.json').read_bytes()
         second = backup_all_profiles(self.session)
@@ -87,14 +92,14 @@ class FullBackupTests(unittest.TestCase):
                 backup_all_profiles(self.session)
         copied.assert_not_called()
 
-    def test_runtime_links_preserved_but_profile_links_refused(self):
+    def test_shared_runtime_markers_ignored_and_profile_links_refused(self):
         try:
             (self.root / 'RunningChromeVersion').symlink_to('999.0-synthetic')
         except OSError:
             self.skipTest('Symlinks unavailable')
         backup = backup_all_profiles(self.session)
-        self.assertEqual((backup / 'User Data/RunningChromeVersion').readlink(), Path('999.0-synthetic'))
-        (self.root / 'linked-profile').symlink_to(self.root / 'Default', target_is_directory=True)
+        self.assertFalse((backup / 'User Data/RunningChromeVersion').is_symlink())
+        (self.root / 'Profile 1' / 'linked-data').symlink_to(self.root / 'Default', target_is_directory=True)
         with self.assertRaisesRegex(ValueError, 'symbolic link'):
             backup_all_profiles(self.session)
 
