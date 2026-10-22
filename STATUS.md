@@ -69,7 +69,7 @@ Alexander updates the main-branch checkout and runs `python3 ProfileOrg/EdgeProf
 
 ## Branch and local work
 
-Alexander explicitly authorized promoting the tested terminal version to main. Preserve history by merging PR #3, retargeting PR #5 to main and merging #5. Version 0.6.0-terminal remains the active product; historical GUI files remain a prototype. Main-branch CI is the final publication check. Real-browser acceptance remains pending independently of merge status.
+Alexander explicitly authorized promoting the tested terminal version to main. PR #3 and PR #5 were merged with history preserved; #5 was retargeted to main first. Version 0.6.0-terminal remains the active product; historical GUI files remain a prototype. Main-branch CI passed; publication is complete. Real-browser acceptance remains pending independently of merge status.
 
 ## Live terminal navigation and profile-only scope (current handoff)
 
@@ -79,4 +79,8 @@ B includes only registered profile folders plus Local State and existing organis
 
 Local synthetic verification: 49 tests discovered, 41 passed, eight optional GUI checks skipped (Tk/display unavailable). Includes a real pseudo-terminal keyboard pin/apply flow and preview no-write/stable-selection checks. No real browser data accessed. Native [CI 39745534348](https://github.com/xander-me/MicrosoftEdge/actions/runs/39745534348) at `94c0592` passed all 49 tests on Apple Silicon and Intel; Linux passed 41 with eight optional GUI skips. Every runner also completed the dependency-free plain demo. The first Mac pseudo-terminal test stalled after saving because the test waited without draining terminal output; it now drains output and waits for the preview before sending Quit. The corrected test passes on both Macs. Real-user passwords/sync/policies, native removal and restore remain NOT RUN; Alexander owns that acceptance.
 
-Next action: switch to main and pull on the Mac, launch --demo in Terminal.app, select with arrows, M/Space/-/+ and review the changing Now/Next table before A. Then close Edge and test B to a chosen destination; inspect READY.json for profiles_only and exact included folders. Promotion through PR #3 and PR #5 is explicitly authorized by Alexander; main-branch validation will be recorded below. Shared board tracks #12 as Awaiting testing. No intentional local changes should remain after publication.
+Next action: switch to main and pull on the Mac, launch --demo in Terminal.app, select with arrows, M/Space/-/+ and review the changing Now/Next table before A. Then close Edge and test B to a chosen destination; inspect READY.json for profiles_only and exact included folders. Promotion through PR #3 and PR #5 was explicitly authorized by Alexander and is complete. Shared board tracks #12 as Awaiting testing. No intentional local changes should remain after publication.
+
+## Main promotion completed
+
+Version `0.6.0-terminal` is on main at merge `8d5be5d`. [Main CI 39750042646](https://github.com/xander-me/MicrosoftEdge/actions/runs/39750042646) succeeded after the merge. Local checkout is main, synchronized with origin; --version confirms 0.6.0-terminal. No uncommitted/unpushed work remains after this documentation update. User-Mac acceptance remains pending as described above; merging does not certify password/sync/policy or restore behaviour. Alexander can now use git switch main and git pull --ff-only before the demo.
